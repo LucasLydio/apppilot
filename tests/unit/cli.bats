@@ -26,3 +26,18 @@ load ../test_helper
   [ "$status" -eq 2 ]
   [[ "$output" == '{"success":false'* ]]
 }
+
+@test "adapters list returns built-in adapters" {
+  run bash "$APPPILOT_BIN" adapters list
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"pm2"* ]]
+  [[ "$output" == *"compose"* ]]
+}
+
+@test "adapters list supports json" {
+  run bash "$APPPILOT_BIN" adapters list --json
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'"adapters"'* ]]
+  [[ "$output" == *'"name":"pm2"'* ]]
+  [[ "$output" == *'"name":"compose"'* ]]
+}

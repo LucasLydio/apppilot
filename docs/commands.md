@@ -41,6 +41,7 @@ apppilot logs users-api --lines 100
 ```bash
 apppilot doctor
 apppilot security audit
+apppilot adapters list
 ```
 
 ## Exit Codes

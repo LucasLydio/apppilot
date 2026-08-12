@@ -74,6 +74,8 @@ export APPPILOT_ROOT APPPILOT_JSON APPPILOT_QUIET APPPILOT_NON_INTERACTIVE APPPI
 . "$APPPILOT_ROOT/src/commands/doctor.sh"
 # shellcheck source=src/commands/security.sh
 . "$APPPILOT_ROOT/src/commands/security.sh"
+# shellcheck source=src/commands/adapters.sh
+. "$APPPILOT_ROOT/src/commands/adapters.sh"
 
 usage() {
   cat <<'USAGE'
@@ -94,6 +96,7 @@ Commands:
   logs <app> [--lines <n>]
   doctor
   security audit
+  adapters list
 
 Global flags:
   --json              Print machine-readable JSON only
@@ -143,6 +146,7 @@ main() {
     logs) cmd_logs "${args[@]}" ;;
     doctor) cmd_doctor "${args[@]}" ;;
     security) cmd_security "${args[@]}" ;;
+    adapters) cmd_adapters "${args[@]}" ;;
     *) output_error "Unknown command: $command" "$APPPILOT_ERR_ARGS"; return "$APPPILOT_ERR_ARGS" ;;
   esac
 }
