@@ -44,6 +44,31 @@ teardown() {
   [ "$status" -eq 0 ]
 }
 
+@test "guided add registers pm2 application after confirmation" {
+  fixture="$PROJECT_ROOT/tests/fixtures/pm2-app"
+  run bash "$APPPILOT_BIN" init --non-interactive --quiet
+  [ "$status" -eq 0 ]
+  run bash -c '
+    printf "%s\n" guided-api pm2 "$2" server.js production y | APPPILOT_FORCE_INTERACTIVE=1 bash "$1" add
+  ' _ "$APPPILOT_BIN" "$fixture"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Review Application"* ]]
+  [[ "$output" == *"Registered guided-api"* ]]
+  [ -f "$APPPILOT_CONFIG_HOME/apps/guided-api.yml" ]
+}
+
+@test "guided add can redo answers before writing" {
+  fixture="$PROJECT_ROOT/tests/fixtures/pm2-app"
+  run bash "$APPPILOT_BIN" init --non-interactive --quiet
+  [ "$status" -eq 0 ]
+  run bash -c '
+    printf "%s\n" wrong-api pm2 "$2" server.js production r guided-api pm2 "$2" server.js production y | APPPILOT_FORCE_INTERACTIVE=1 bash "$1" add
+  ' _ "$APPPILOT_BIN" "$fixture"
+  [ "$status" -eq 0 ]
+  [ ! -f "$APPPILOT_CONFIG_HOME/apps/wrong-api.yml" ]
+  [ -f "$APPPILOT_CONFIG_HOME/apps/guided-api.yml" ]
+}
+
 @test "list json has stable envelope" {
   fixture="$PROJECT_ROOT/tests/fixtures/compose-app"
   run bash "$APPPILOT_BIN" init --non-interactive

@@ -156,6 +156,16 @@ AppPilot keeps one small YAML file per application under:
 ~/.config/apppilot/apps/
 ```
 
+For humans, use the guided flow:
+
+```bash
+apppilot add
+```
+
+AppPilot asks for the application name, manager, project path, app file, and environment. It then prints a review screen before saving. At the confirmation prompt, choose `r` to redo the answers or `n` to cancel without writing anything.
+
+For automation, pass every value explicitly and use `--non-interactive`.
+
 ### PM2 App
 
 Example project:
@@ -282,6 +292,7 @@ apppilot --version
 apppilot init
 apppilot overview
 
+apppilot add
 apppilot add --name <name> --manager <pm2|compose> --path <path> [--entrypoint <file>|--compose-file <file>]
 apppilot remove <app> --yes
 apppilot list

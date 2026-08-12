@@ -96,7 +96,7 @@ usage() {
   printf '  %-34s %s\n' 'doctor' 'Run host and app diagnostics'
   printf '  %-34s %s\n' 'security audit' 'Run read-only security checks'
   ui_section "Applications"
-  printf '  %-34s %s\n' 'add --name <app> ...' 'Register PM2 or Compose app'
+  printf '  %-34s %s\n' 'add [--name <app> ...]' 'Register PM2 or Compose app'
   printf '  %-34s %s\n' 'list' 'List registered apps'
   printf '  %-34s %s\n' 'status|logs <app>' 'Inspect an app'
   printf '  %-34s %s\n' 'start|stop|restart <app>' 'Manage an app'
