@@ -16,7 +16,7 @@ jobs:
       - name: ShellCheck
         run: shellcheck bin/apppilot src/**/*.sh install.sh uninstall.sh tests/test_helper.bash
       - name: Bats unit tests
-        run: bats tests/unit
+        run: bats tests/unit/cli.bats tests/unit/registry.bats
       - name: CLI smoke tests
         run: |
           bash bin/apppilot --help

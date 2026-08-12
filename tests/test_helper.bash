@@ -12,5 +12,9 @@ setup_apppilot_home() {
 }
 
 teardown_apppilot_home() {
-  rm -rf "${APPPILOT_TEST_HOME:-}"
+  if [[ -n "${APPPILOT_TEST_HOME:-}" && "$APPPILOT_TEST_HOME" == /tmp/* ]]; then
+    rm -rf "$APPPILOT_TEST_HOME"
+  fi
+  unset APPPILOT_TEST_HOME APPPILOT_CONFIG_HOME APPPILOT_STATE_HOME
+  return 0
 }

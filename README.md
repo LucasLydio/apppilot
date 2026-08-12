@@ -417,7 +417,7 @@ shellcheck bin/apppilot src/**/*.sh install.sh uninstall.sh
 Run unit tests:
 
 ```bash
-bats tests/unit
+bats tests/unit/cli.bats tests/unit/registry.bats
 ```
 
 Run CLI smoke checks manually:

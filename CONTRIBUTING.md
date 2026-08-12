@@ -7,8 +7,8 @@ For v0.1, keep changes focused on the CLI contract in `apppilot-v0.1-build-guide
 Before opening a pull request:
 
 ```bash
-shellcheck bin/apppilot src/**/*.sh install.sh uninstall.sh
-bats tests/unit
+shellcheck bin/apppilot src/**/*.sh install.sh uninstall.sh tests/test_helper.bash
+bats tests/unit/cli.bats tests/unit/registry.bats
 ```
 
 Guidelines:
