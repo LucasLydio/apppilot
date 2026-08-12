@@ -97,6 +97,7 @@ usage() {
   printf '  %-34s %s\n' 'security audit' 'Run read-only security checks'
   ui_section "Applications"
   printf '  %-34s %s\n' 'add [--name <app> ...]' 'Register PM2 or Compose app'
+  printf '  %-34s %s\n' 'add --env-from-example' 'Copy .env.example to .env'
   printf '  %-34s %s\n' 'list' 'List registered apps'
   printf '  %-34s %s\n' 'status <app> [--full]' 'Show app status table/details'
   printf '  %-34s %s\n' 'logs <app>' 'Show app logs'

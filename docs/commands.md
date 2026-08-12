@@ -22,13 +22,14 @@ apppilot overview
 
 ```bash
 apppilot add
+apppilot add --name users-api --manager pm2 --path /srv/users-api --entrypoint dist/main.js --env-from-example --non-interactive
 apppilot add --name users-api --manager pm2 --path /srv/users-api --entrypoint dist/main.js --non-interactive
 apppilot add --name ecommerce --manager compose --path /srv/ecommerce --compose-file compose.yaml --non-interactive
 apppilot list
 apppilot remove users-api --yes --non-interactive
 ```
 
-Run `apppilot add` in a terminal for the guided registration flow. AppPilot asks for the app name, manager, project path, app file, and environment, then shows a summary before writing the registry file. Choose `r` at the confirmation prompt to redo the answers.
+Run `apppilot add` in a terminal for the guided registration flow. AppPilot asks for the app name, manager, project path, app file, and environment. If `.env.example` exists and `.env` does not, AppPilot can create `.env` from the example before registration. Choose `r` at the confirmation prompt to redo the answers.
 
 ## Operations
 

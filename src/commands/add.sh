@@ -159,6 +159,72 @@ add_prompt_environment() {
   done
 }
 
+add_env_example_available() {
+  local project_path="$1"
+  [[ -f "$project_path/.env.example" && ! -L "$project_path/.env.example" && ! -e "$project_path/.env" ]]
+}
+
+add_prompt_env_from_example() {
+  local variable="$1"
+  local project_path="$2"
+  local current="${3:-ask}"
+  local answer=""
+
+  printf -v "$variable" '%s' "skip"
+  add_env_example_available "$project_path" || return 0
+
+  case "$current" in
+    copy)
+      printf -v "$variable" '%s' "copy"
+      return 0
+      ;;
+    skip) return 0 ;;
+  esac
+
+  add_prompt_tip "Found .env.example and no .env. AppPilot can copy it as a starter file with 600 permissions." ".env"
+  while true; do
+    printf 'Create .env from .env.example? [Y/n] '
+    if ! IFS= read -r answer; then
+      return "$APPPILOT_ERR_ARGS"
+    fi
+    case "$answer" in
+      ""|y|Y|yes|YES|Yes)
+        printf -v "$variable" '%s' "copy"
+        return 0
+        ;;
+      n|N|no|NO|No)
+        printf -v "$variable" '%s' "skip"
+        return 0
+        ;;
+      *) log_warn "Choose y to create .env or n to skip." ;;
+    esac
+  done
+}
+
+add_create_env_from_example() {
+  local project_path="$1"
+  local source="$project_path/.env.example"
+  local dest="$project_path/.env"
+  local tmp_file
+
+  [[ -f "$source" && ! -L "$source" ]] || return "$APPPILOT_ERR_CONFIG"
+  [[ ! -e "$dest" ]] || return "$APPPILOT_ERR_CONFIG"
+  tmp_file="$(mktemp "$project_path/.env.apppilot.XXXXXX")" || return "$APPPILOT_ERR_PERMISSION"
+  if ! cp "$source" "$tmp_file"; then
+    rm -f "$tmp_file"
+    return "$APPPILOT_ERR_PERMISSION"
+  fi
+  chmod 600 "$tmp_file" 2>/dev/null || true
+  if [[ -e "$dest" ]]; then
+    rm -f "$tmp_file"
+    return "$APPPILOT_ERR_CONFIG"
+  fi
+  mv "$tmp_file" "$dest" || {
+    rm -f "$tmp_file"
+    return "$APPPILOT_ERR_PERMISSION"
+  }
+}
+
 add_default_entrypoint() {
   local path="$1"
   local candidate
@@ -219,6 +285,7 @@ add_print_summary() {
   local entrypoint="$4"
   local compose_file="$5"
   local environment="$6"
+  local env_action="${7:-skip}"
 
   ui_section "Review Application"
   ui_kv "Name" "$name"
@@ -230,6 +297,9 @@ add_print_summary() {
     ui_kv "Entrypoint" "$entrypoint"
   fi
   ui_kv "Environment" "$environment"
+  if [[ "$env_action" == "copy" ]]; then
+    ui_kv ".env" "create from .env.example"
+  fi
   printf '\n'
 }
 
@@ -240,6 +310,7 @@ add_collect_guided() {
   local ref_entrypoint="$4"
   local ref_compose_file="$5"
   local ref_environment="$6"
+  local ref_env_action="$7"
   local confirm_status=0 validation_status=0 default_value=""
 
   while true; do
@@ -273,8 +344,10 @@ add_collect_guided() {
     printf '\n'
 
     add_prompt_environment ref_environment "$ref_environment" || return "$?"
+    printf '\n'
+    add_prompt_env_from_example ref_env_action "$ref_path" "$ref_env_action" || return "$?"
 
-    add_print_summary "$ref_name" "$ref_manager" "$ref_path" "$ref_entrypoint" "$ref_compose_file" "$ref_environment"
+    add_print_summary "$ref_name" "$ref_manager" "$ref_path" "$ref_entrypoint" "$ref_compose_file" "$ref_environment" "$ref_env_action"
     if add_confirm_registration; then
       confirm_status=0
     else
@@ -297,6 +370,7 @@ add_collect_guided() {
       APPPILOT_ADD_ENTRYPOINT="$ref_entrypoint"
       APPPILOT_ADD_COMPOSE_FILE="$ref_compose_file"
       APPPILOT_ADD_ENVIRONMENT="$ref_environment"
+      APPPILOT_ADD_ENV_ACTION="$ref_env_action"
       return 0
     fi
     validation_status="$?"
@@ -323,7 +397,7 @@ add_collect_guided() {
 }
 
 cmd_add() {
-  local name="" manager="" path="" entrypoint="" compose_file="" environment="production"
+  local name="" manager="" path="" entrypoint="" compose_file="" environment="production" env_action="ask"
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
       --name) name="${2:-}"; shift 2 ;;
@@ -332,13 +406,15 @@ cmd_add() {
       --entrypoint) entrypoint="${2:-}"; shift 2 ;;
       --compose-file) compose_file="${2:-}"; shift 2 ;;
       --environment) environment="${2:-production}"; shift 2 ;;
+      --env-from-example) env_action="copy"; shift ;;
+      --no-env-from-example) env_action="skip"; shift ;;
       *) output_error "Unknown add argument: $1" "$APPPILOT_ERR_ARGS"; return "$APPPILOT_ERR_ARGS" ;;
     esac
   done
 
   if add_should_prompt; then
     local guided_status=0
-    if add_collect_guided "$name" "$manager" "$path" "$entrypoint" "$compose_file" "$environment"; then
+    if add_collect_guided "$name" "$manager" "$path" "$entrypoint" "$compose_file" "$environment" "$env_action"; then
       guided_status=0
     else
       guided_status="$?"
@@ -354,6 +430,7 @@ cmd_add() {
     entrypoint="$APPPILOT_ADD_ENTRYPOINT"
     compose_file="$APPPILOT_ADD_COMPOSE_FILE"
     environment="$APPPILOT_ADD_ENVIRONMENT"
+    env_action="$APPPILOT_ADD_ENV_ACTION"
   fi
 
   [[ -n "$name" && -n "$manager" && -n "$path" ]] || {
@@ -370,11 +447,27 @@ cmd_add() {
     return "$code"
   }
 
+  [[ "$env_action" == "ask" ]] && env_action="skip"
+
+  if [[ "$env_action" == "copy" ]]; then
+    if ! add_env_example_available "$path"; then
+      output_error "Cannot create .env from .env.example for '$name'" "$APPPILOT_ERR_CONFIG"
+      return "$APPPILOT_ERR_CONFIG"
+    fi
+  fi
+
   if [[ "${APPPILOT_DRY_RUN:-0}" == "1" ]]; then
     if [[ "${APPPILOT_JSON:-0}" == "1" ]]; then
-      output_success_json "{\"actions\":[\"register application $(json_escape "$name")\"]}" "[]" "true"
+      if [[ "$env_action" == "copy" ]]; then
+        output_success_json "{\"actions\":[\"create .env from .env.example\",\"register application $(json_escape "$name")\"]}" "[]" "true"
+      else
+        output_success_json "{\"actions\":[\"register application $(json_escape "$name")\"]}" "[]" "true"
+      fi
     else
       output_dry_run_header
+      if [[ "$env_action" == "copy" ]]; then
+        log_info "Would create .env from .env.example"
+      fi
       log_info "Would register application: $name"
       log_info "No changes were made."
     fi
@@ -382,6 +475,13 @@ cmd_add() {
   fi
 
   lock_acquire "add" "$name" || return "$?"
+  if [[ "$env_action" == "copy" ]]; then
+    add_create_env_from_example "$path" || {
+      local code="$?"
+      output_error "Could not create .env from .env.example for '$name'" "$code"
+      return "$code"
+    }
+  fi
   registry_add "$name" "$manager" "$path" "$entrypoint" "$compose_file" "$environment" || {
     local code="$?"
     case "$code" in
@@ -393,8 +493,13 @@ cmd_add() {
   }
 
   if [[ "${APPPILOT_JSON:-0}" == "1" ]]; then
-    output_success_json "{\"app\":$(json_string "$name"),\"manager\":$(json_string "$manager")}"
+    local env_created="false"
+    [[ "$env_action" == "copy" ]] && env_created="true"
+    output_success_json "{\"app\":$(json_string "$name"),\"manager\":$(json_string "$manager"),\"envCreated\":$(json_bool "$env_created")}"
   else
+    if [[ "$env_action" == "copy" ]]; then
+      log_check "Created .env from .env.example"
+    fi
     log_check "Registered $name ($manager)"
   fi
 }

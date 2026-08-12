@@ -82,6 +82,38 @@ teardown() {
   [[ "$output" == *"Registered guided-api"* ]]
 }
 
+@test "guided add can create env from env example" {
+  project="$APPPILOT_TEST_HOME/env-app"
+  mkdir -p "$project"
+  cp "$PROJECT_ROOT/tests/fixtures/pm2-app/server.js" "$project/server.js"
+  printf 'PORT=3000\nTOKEN=change-me\n' >"$project/.env.example"
+
+  run bash "$APPPILOT_BIN" init --non-interactive --quiet
+  [ "$status" -eq 0 ]
+  run bash -c '
+    printf "%s\n" env-api pm2 "$2" server.js production y y | APPPILOT_FORCE_INTERACTIVE=1 bash "$1" add
+  ' _ "$APPPILOT_BIN" "$project"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Found .env.example and no .env"* ]]
+  [[ "$output" == *"Created .env from .env.example"* ]]
+  [ -f "$project/.env" ]
+  [ "$(stat -c '%a' "$project/.env")" = "600" ]
+}
+
+@test "non-interactive add can create env from env example explicitly" {
+  project="$APPPILOT_TEST_HOME/env-app"
+  mkdir -p "$project"
+  cp "$PROJECT_ROOT/tests/fixtures/pm2-app/server.js" "$project/server.js"
+  printf 'PORT=3000\nTOKEN=change-me\n' >"$project/.env.example"
+
+  run bash "$APPPILOT_BIN" init --non-interactive --quiet
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" add --name env-api --manager pm2 --path "$project" --entrypoint server.js --env-from-example --non-interactive
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Created .env from .env.example"* ]]
+  [ -f "$project/.env" ]
+}
+
 @test "list json has stable envelope" {
   fixture="$PROJECT_ROOT/tests/fixtures/compose-app"
   run bash "$APPPILOT_BIN" init --non-interactive

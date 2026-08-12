@@ -162,9 +162,21 @@ For humans, use the guided flow:
 apppilot add
 ```
 
-AppPilot asks for the application name, manager, project path, app file, and environment. It then prints a review screen before saving. At the confirmation prompt, choose `r` to redo the answers or `n` to cancel without writing anything.
+AppPilot asks for the application name, manager, project path, app file, and environment. If the project has `.env.example` and does not already have `.env`, AppPilot offers to create `.env` as a starter file with restricted permissions. It then prints a review screen before saving. At the confirmation prompt, choose `r` to redo the answers or `n` to cancel without writing anything.
 
 For automation, pass every value explicitly and use `--non-interactive`.
+
+To create `.env` from `.env.example` in automation, opt in explicitly:
+
+```bash
+apppilot add \
+  --name users-api \
+  --manager pm2 \
+  --path /srv/users-api \
+  --entrypoint dist/main.js \
+  --env-from-example \
+  --non-interactive
+```
 
 ### PM2 App
 
@@ -295,7 +307,7 @@ apppilot init
 apppilot overview
 
 apppilot add
-apppilot add --name <name> --manager <pm2|compose> --path <path> [--entrypoint <file>|--compose-file <file>]
+apppilot add --name <name> --manager <pm2|compose> --path <path> [--entrypoint <file>|--compose-file <file>] [--env-from-example]
 apppilot remove <app> --yes
 apppilot list
 
