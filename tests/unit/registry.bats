@@ -18,6 +18,19 @@ teardown() {
   [ -f "$APPPILOT_CONFIG_HOME/apppilot.yml" ]
 }
 
+@test "init renders welcome in human mode" {
+  run bash "$APPPILOT_BIN" init --non-interactive
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"DevOps control for Linux VPS applications"* ]]
+  [[ "$output" == *"Contribute"* ]]
+}
+
+@test "init quiet mode suppresses welcome" {
+  run bash "$APPPILOT_BIN" init --non-interactive --quiet
+  [ "$status" -eq 0 ]
+  [ "$output" = "" ]
+}
+
 @test "add, list, and remove pm2 application" {
   fixture="$PROJECT_ROOT/tests/fixtures/pm2-app"
   run bash "$APPPILOT_BIN" init --non-interactive

@@ -42,8 +42,19 @@ cmd_init() {
   if [[ "${APPPILOT_JSON:-0}" == "1" ]]; then
     output_success_json "{\"configHome\":$(json_string "$APPPILOT_CONFIG_HOME"),\"stateHome\":$(json_string "$APPPILOT_STATE_HOME")}"
   else
-    log_check "AppPilot initialized"
-    log_info "Config: $APPPILOT_CONFIG_HOME"
-    log_info "State:  $APPPILOT_STATE_HOME"
+    [[ "${APPPILOT_QUIET:-0}" == "1" ]] && return "$APPPILOT_OK"
+    ui_welcome
+    ui_section "Initialized"
+    ui_status_line ok "Config" "$APPPILOT_CONFIG_HOME"
+    ui_status_line ok "State" "$APPPILOT_STATE_HOME"
+    ui_section "Next Steps"
+    printf '  1. apppilot adapters list\n'
+    printf '  2. apppilot adapters install pm2 --dry-run\n'
+    printf '  3. apppilot overview\n'
+    printf '  4. apppilot doctor\n'
+    ui_section "Contribute"
+    ui_kv "Repository" "https://github.com/LucasLydio/apppilot"
+    ui_kv "Issues" "https://github.com/LucasLydio/apppilot/issues"
+    ui_kv "Feedback" "Open an issue with your VPS, app manager, and use case"
   fi
 }

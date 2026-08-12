@@ -4,6 +4,19 @@ ui_line() {
   printf '%s\n' '------------------------------------------------------------'
 }
 
+ui_frame_line() {
+  printf '%s\n' '+----------------------------------------------------------+'
+}
+
+ui_frame_text() {
+  local text="${1:-}"
+  printf '| %-56s |\n' "$text"
+}
+
+ui_frame_blank() {
+  printf '| %-56s |\n' ''
+}
+
 ui_title() {
   [[ "${APPPILOT_QUIET:-0}" == "1" ]] && return 0
   printf '%s\n' "${APPPILOT_COLOR_BOLD:-}$1${APPPILOT_COLOR_RESET:-}"
@@ -15,6 +28,21 @@ ui_banner() {
   printf '%s\n' "${APPPILOT_COLOR_BOLD:-}AppPilot${APPPILOT_COLOR_RESET:-} ${APPPILOT_VERSION:-0.1.0}"
   printf '%s\n' 'DevOps control for Linux VPS applications'
   ui_line
+}
+
+ui_welcome() {
+  [[ "${APPPILOT_QUIET:-0}" == "1" ]] && return 0
+  ui_frame_line
+  ui_frame_text "   ___              ____  _ _       _"
+  ui_frame_text "  / _ \\ _ __  _ __ |  _ \\(_) | ___ | |_"
+  ui_frame_text " | |_| | '_ \\| '_ \\| |_) | | |/ _ \\| __|"
+  ui_frame_text " |  _  | |_) | |_) |  __/| | | (_) | |_"
+  ui_frame_text " |_| |_| .__/| .__/|_|   |_|_|\\___/ \\__|"
+  ui_frame_text "       |_|   |_|"
+  ui_frame_blank
+  ui_frame_text "DevOps control for Linux VPS applications"
+  ui_frame_text "Safe defaults. Adapter-based operations. JSON-ready."
+  ui_frame_line
 }
 
 ui_section() {
