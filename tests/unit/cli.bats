@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 
-load ../test_helper.bash
+load ../test_helper
 
 @test "version prints v0.1.0" {
   run bash "$APPPILOT_BIN" --version
