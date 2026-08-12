@@ -16,4 +16,9 @@ firewall_audit_lines() {
   else
     printf 'warning|firewall|No supported firewall tool detected\n'
   fi
+  local port
+  while IFS= read -r port; do
+    [[ -n "$port" ]] || continue
+    printf 'info|listening_port|Listening TCP port detected: %s\n' "$port"
+  done < <(ports_listening_tcp)
 }

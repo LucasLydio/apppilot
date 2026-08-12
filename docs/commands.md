@@ -44,6 +44,7 @@ apppilot security audit
 apppilot adapters list
 apppilot adapters install [pm2|compose|all] [--yes]
 apppilot adapters updates
+apppilot validate
 ```
 
 ## Exit Codes

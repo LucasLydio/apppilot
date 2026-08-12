@@ -13,6 +13,7 @@ load ../test_helper
   [ "$status" -eq 0 ]
   [[ "$output" == *"AppPilot 0.1.0"* ]]
   [[ "$output" == *"security audit"* ]]
+  [[ "$output" == *"validate"* ]]
 }
 
 @test "unknown command returns stable invalid-argument exit code" {
@@ -60,4 +61,12 @@ load ../test_helper
   [ "$status" -eq 0 ]
   [[ "$output" == *'"pm2"'* ]]
   [[ "$output" == *'"compose"'* ]]
+}
+
+@test "validate reports uninitialized config" {
+  setup_apppilot_home
+  run bash "$APPPILOT_BIN" validate
+  [ "$status" -eq 6 ]
+  [[ "$output" == *"has not been initialized"* ]]
+  teardown_apppilot_home
 }

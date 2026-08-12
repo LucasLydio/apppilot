@@ -27,13 +27,17 @@ config_init() {
   mkdir -p "$APPPILOT_CONFIG_HOME" "$APPPILOT_APPS_DIR" "$APPPILOT_SECRETS_DIR" "$APPPILOT_STATE_HOME" "$APPPILOT_LOCKS_DIR"
   chmod 700 "$APPPILOT_SECRETS_DIR" 2>/dev/null || true
   if [[ ! -f "$APPPILOT_CONFIG_FILE" ]]; then
+    local tmp_file
+    tmp_file="$(mktemp "$APPPILOT_CONFIG_HOME/apppilot.yml.XXXXXX")"
     {
       printf 'version: 1\n\n'
       printf 'server:\n'
       printf '  name: local\n\n'
       printf 'defaults:\n'
       printf '  output: human\n'
-    } >"$APPPILOT_CONFIG_FILE"
+    } >"$tmp_file"
+    chmod 600 "$tmp_file" 2>/dev/null || true
+    mv "$tmp_file" "$APPPILOT_CONFIG_FILE"
   fi
 }
 

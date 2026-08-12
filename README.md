@@ -115,6 +115,12 @@ Inspect the host:
 apppilot doctor
 ```
 
+Validate AppPilot configuration and registered apps:
+
+```bash
+apppilot validate
+```
+
 Run the security audit:
 
 ```bash
@@ -289,6 +295,7 @@ apppilot security audit
 apppilot adapters list
 apppilot adapters install [pm2|compose|all] [--yes]
 apppilot adapters updates
+apppilot validate
 ```
 
 Global flags:
@@ -423,6 +430,7 @@ export APPPILOT_STATE_HOME="$tmp/state"
 bash bin/apppilot --version
 bash bin/apppilot init --non-interactive
 bash bin/apppilot list --json
+bash bin/apppilot validate --json
 bash bin/apppilot doctor --json
 bash bin/apppilot security audit --json
 ```
@@ -459,6 +467,7 @@ Contribution guidelines:
 - Never print secrets.
 - Use exit codes from `src/core/exit-codes.sh`.
 - Add or update tests for behavior changes.
+- Run `apppilot validate` before relying on registered application state.
 - Do not add automatic SSH, firewall, SSL, Nginx, backup, or deployment automation to v0.1.
 
 ## Documentation
@@ -469,6 +478,7 @@ More details:
 - [Commands](docs/commands.md)
 - [Configuration](docs/configuration.md)
 - [Security](docs/security.md)
+- [Release Checklist](docs/release.md)
 - [Contributing](CONTRIBUTING.md)
 
 ## License

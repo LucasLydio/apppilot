@@ -14,7 +14,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y shellcheck bats jq
       - name: ShellCheck
-        run: shellcheck bin/apppilot src/**/*.sh install.sh uninstall.sh
+        run: shellcheck bin/apppilot src/**/*.sh install.sh uninstall.sh tests/test_helper.bash
       - name: Bats unit tests
         run: bats tests/unit
       - name: CLI smoke tests
@@ -22,4 +22,12 @@ jobs:
           bash bin/apppilot --help
           bash bin/apppilot --version
           tmp="$(mktemp -d)"
-          APPPILOT_CONFIG_HOME="$tmp/config" APPPILOT_STATE_HOME="$tmp/state" bash bin/apppilot init --non-interactive
+          export APPPILOT_CONFIG_HOME="$tmp/config"
+          export APPPILOT_STATE_HOME="$tmp/state"
+          bash bin/apppilot init --non-interactive
+          bash bin/apppilot list --json | jq .
+          bash bin/apppilot validate --json | jq .
+          bash bin/apppilot doctor --json | jq .
+          bash bin/apppilot security audit --json | jq .
+          bash bin/apppilot adapters list --json | jq .
+          bash bin/apppilot adapters install pm2 --dry-run --json | jq .

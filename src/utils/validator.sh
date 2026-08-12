@@ -16,6 +16,13 @@ validator_path_safe() {
   [[ "$path" != *".."* ]]
 }
 
+validator_relative_path_safe() {
+  local path="${1:-}"
+  [[ -n "$path" ]] || return 1
+  [[ "$path" != /* ]] || return 1
+  [[ "$path" != *".."* ]]
+}
+
 validator_required() {
   [[ -n "${1:-}" ]]
 }

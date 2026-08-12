@@ -51,11 +51,11 @@ app_config_validate_loaded() {
   [[ -d "$APP_PATH" ]] || return "$APPPILOT_ERR_CONFIG"
   if [[ "$APP_MANAGER" == "pm2" ]]; then
     validator_required "$APP_ENTRYPOINT" || return "$APPPILOT_ERR_CONFIG"
-    [[ "$APP_ENTRYPOINT" != /* && "$APP_ENTRYPOINT" != *".."* ]] || return "$APPPILOT_ERR_CONFIG"
+    validator_relative_path_safe "$APP_ENTRYPOINT" || return "$APPPILOT_ERR_CONFIG"
     [[ -f "$APP_PATH/$APP_ENTRYPOINT" ]] || return "$APPPILOT_ERR_CONFIG"
   else
     validator_required "$APP_COMPOSE_FILE" || return "$APPPILOT_ERR_CONFIG"
-    [[ "$APP_COMPOSE_FILE" != /* && "$APP_COMPOSE_FILE" != *".."* ]] || return "$APPPILOT_ERR_CONFIG"
+    validator_relative_path_safe "$APP_COMPOSE_FILE" || return "$APPPILOT_ERR_CONFIG"
     [[ -f "$APP_PATH/$APP_COMPOSE_FILE" ]] || return "$APPPILOT_ERR_CONFIG"
   fi
 }

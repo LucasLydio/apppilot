@@ -30,6 +30,8 @@ cmd_security() {
 
   if [[ "${APPPILOT_JSON:-0}" == "1" ]]; then
     output_success_json "{\"findings\":$(security_json_from_lines <"$tmp")}"
+    rm -f "$tmp"
+    return "$APPPILOT_OK"
   else
     [[ "${APPPILOT_QUIET:-0}" == "1" ]] || printf '%sAppPilot Security Audit%s\n\n' "${APPPILOT_COLOR_BOLD:-}" "${APPPILOT_COLOR_RESET:-}"
     local severity id message warnings=0

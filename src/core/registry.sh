@@ -9,7 +9,9 @@ registry_load() {
   validator_name "$name" || return "$APPPILOT_ERR_ARGS"
   local file
   file="$(app_config_file_for "$name")"
+  [[ ! -L "$file" ]] || return "$APPPILOT_ERR_CONFIG"
   app_config_load_file "$file" || return "$APPPILOT_ERR_APP_NOT_FOUND"
+  [[ "$APP_NAME" == "$name" ]] || return "$APPPILOT_ERR_CONFIG"
   app_config_validate_loaded
 }
 
@@ -25,6 +27,8 @@ registry_add() {
   registry_validate_new "$name" "$manager" "$path" "$entrypoint" "$compose_file" || return "$?"
   file="$(app_config_file_for "$name")"
   registry_ensure
+  local tmp_file
+  tmp_file="$(mktemp "$APPPILOT_APPS_DIR/$name.yml.XXXXXX")"
   {
     printf 'name: %s\n' "$name"
     printf 'manager: %s\n' "$manager"
@@ -35,7 +39,9 @@ registry_add() {
       printf 'compose_file: %s\n' "$compose_file"
     fi
     printf 'environment: %s\n' "$environment"
-  } >"$file"
+  } >"$tmp_file"
+  chmod 600 "$tmp_file" 2>/dev/null || true
+  mv "$tmp_file" "$file"
 }
 
 registry_validate_new() {
@@ -54,9 +60,11 @@ registry_validate_new() {
   [[ ! -e "$file" ]] || return "$APPPILOT_ERR_CONFIG"
 
   if [[ "$manager" == "pm2" ]]; then
-    [[ "$entrypoint" != /* && "$entrypoint" != *".."* && -f "$path/$entrypoint" ]] || return "$APPPILOT_ERR_CONFIG"
+    validator_relative_path_safe "$entrypoint" || return "$APPPILOT_ERR_CONFIG"
+    [[ -f "$path/$entrypoint" && ! -L "$path/$entrypoint" ]] || return "$APPPILOT_ERR_CONFIG"
   else
-    [[ "$compose_file" != /* && "$compose_file" != *".."* && -f "$path/$compose_file" ]] || return "$APPPILOT_ERR_CONFIG"
+    validator_relative_path_safe "$compose_file" || return "$APPPILOT_ERR_CONFIG"
+    [[ -f "$path/$compose_file" && ! -L "$path/$compose_file" ]] || return "$APPPILOT_ERR_CONFIG"
   fi
 }
 
@@ -70,7 +78,7 @@ registry_remove() {
 }
 
 registry_names() {
-  registry_ensure
+  [[ -d "$APPPILOT_APPS_DIR" ]] || return 0
   local file
   for file in "$APPPILOT_APPS_DIR"/*.yml; do
     [[ -e "$file" ]] || continue

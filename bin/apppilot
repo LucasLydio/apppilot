@@ -78,6 +78,8 @@ export APPPILOT_ROOT APPPILOT_JSON APPPILOT_QUIET APPPILOT_NON_INTERACTIVE APPPI
 . "$APPPILOT_ROOT/src/commands/security.sh"
 # shellcheck source=src/commands/adapters.sh
 . "$APPPILOT_ROOT/src/commands/adapters.sh"
+# shellcheck source=src/commands/validate.sh
+. "$APPPILOT_ROOT/src/commands/validate.sh"
 
 usage() {
   cat <<'USAGE'
@@ -101,6 +103,7 @@ Commands:
   adapters list
   adapters install [pm2|compose|all] [--yes]
   adapters updates
+  validate
 
 Global flags:
   --json              Print machine-readable JSON only
@@ -151,6 +154,7 @@ main() {
     doctor) cmd_doctor "${args[@]}" ;;
     security) cmd_security "${args[@]}" ;;
     adapters) cmd_adapters "${args[@]}" ;;
+    validate) cmd_validate "${args[@]}" ;;
     *) output_error "Unknown command: $command" "$APPPILOT_ERR_ARGS"; return "$APPPILOT_ERR_ARGS" ;;
   esac
 }

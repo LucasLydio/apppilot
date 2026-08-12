@@ -37,3 +37,12 @@ environment: production
 ## Validation
 
 Application names must be alphanumeric with optional `_` or `-`. Paths must be absolute and must not contain traversal. PM2 entrypoints and Compose files are relative to the application path and must exist.
+
+Run:
+
+```bash
+apppilot validate
+apppilot validate --json
+```
+
+`validate` checks AppPilot configuration, registry files, application paths, managers, and writable state/lock directories without modifying the system.

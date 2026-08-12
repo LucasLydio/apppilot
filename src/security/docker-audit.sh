@@ -11,7 +11,7 @@ docker_audit_lines() {
   while IFS= read -r line; do
     [[ -n "$line" ]] || continue
     found=1
-    if [[ "$line" == *"0.0.0.0:5432"* || "$line" == *":::5432"* || "$line" == *"0.0.0.0:6379"* || "$line" == *":::6379"* ]]; then
+    if [[ "$line" == *"0.0.0.0:5432"* || "$line" == *":::5432"* || "$line" == *"0.0.0.0:6379"* || "$line" == *":::6379"* || "$line" == *"0.0.0.0:3306"* || "$line" == *":::3306"* ]]; then
       printf 'warning|docker_ports|Sensitive service appears publicly published: %s\n' "$line"
     else
       printf 'info|docker_ports|Published container port: %s\n' "$line"

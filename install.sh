@@ -6,8 +6,19 @@ install_root="${APPPILOT_INSTALL_ROOT:-$HOME/.local/share/apppilot}"
 bin_dir="${APPPILOT_BIN_DIR:-$HOME/.local/bin}"
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
+if [[ "${BASH_VERSINFO[0]}" -lt 4 ]]; then
+  printf 'AppPilot requires Bash 4 or newer.\n' >&2
+  exit 1
+fi
+
+if [[ "$(uname -s 2>/dev/null || true)" != "Linux" ]]; then
+  printf 'AppPilot installation currently supports Linux environments.\n' >&2
+  exit 7
+fi
+
 mkdir -p "$install_root" "$bin_dir"
 cp -R "$repo_root/bin" "$repo_root/src" "$repo_root/config" "$install_root/"
+chmod +x "$install_root/bin/apppilot"
 cat >"$bin_dir/apppilot" <<EOF
 #!/usr/bin/env bash
 exec "$install_root/bin/apppilot" "\$@"
@@ -15,10 +26,11 @@ EOF
 chmod +x "$bin_dir/apppilot"
 
 "$install_root/bin/apppilot" init --non-interactive >/dev/null
+"$bin_dir/apppilot" --version >/dev/null
 
 printf 'AppPilot installed.\n\n'
 printf 'Command: %s/apppilot\n\n' "$bin_dir"
-printf 'Optional dependencies:\n'
+printf 'Detected:\n'
 command -v pm2 >/dev/null 2>&1 && printf 'PM2            installed\n' || printf 'PM2            not installed\n'
 command -v docker >/dev/null 2>&1 && printf 'Docker         installed\n' || printf 'Docker         not installed\n'
 if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then

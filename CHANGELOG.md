@@ -7,3 +7,4 @@
 - Added PM2 and Docker Compose adapters.
 - Added lifecycle commands, diagnostics, security audit, JSON output, dry-run, and non-interactive support.
 - Added tests, fixtures, CI, installer, and documentation.
+- Added adapter dependency management, validation, expanded regression tests, and release checklist documentation.
