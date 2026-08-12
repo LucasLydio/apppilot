@@ -8,7 +8,13 @@ APPPILOT_QUIET=0
 APPPILOT_NON_INTERACTIVE=0
 APPPILOT_DRY_RUN=0
 
-script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+script_source="${BASH_SOURCE[0]}"
+while [[ -L "$script_source" ]]; do
+  script_dir="$(cd -- "$(dirname -- "$script_source")" && pwd)"
+  script_source="$(readlink "$script_source")"
+  [[ "$script_source" == /* ]] || script_source="$script_dir/$script_source"
+done
+script_dir="$(cd -- "$(dirname -- "$script_source")" && pwd)"
 APPPILOT_ROOT="$(cd -- "$script_dir/.." && pwd)"
 export APPPILOT_ROOT APPPILOT_JSON APPPILOT_QUIET APPPILOT_NON_INTERACTIVE APPPILOT_DRY_RUN
 

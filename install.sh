@@ -8,7 +8,11 @@ repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
 mkdir -p "$install_root" "$bin_dir"
 cp -R "$repo_root/bin" "$repo_root/src" "$repo_root/config" "$install_root/"
-ln -sfn "$install_root/bin/apppilot" "$bin_dir/apppilot"
+cat >"$bin_dir/apppilot" <<EOF
+#!/usr/bin/env bash
+exec "$install_root/bin/apppilot" "\$@"
+EOF
+chmod +x "$bin_dir/apppilot"
 
 "$install_root/bin/apppilot" init --non-interactive >/dev/null
 
