@@ -15,6 +15,7 @@
 apppilot --help
 apppilot --version
 apppilot init
+apppilot overview
 ```
 
 ## Registry

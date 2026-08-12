@@ -26,6 +26,8 @@ export APPPILOT_ROOT APPPILOT_JSON APPPILOT_QUIET APPPILOT_NON_INTERACTIVE APPPI
 . "$APPPILOT_ROOT/src/utils/colors.sh"
 # shellcheck source=src/utils/logger.sh
 . "$APPPILOT_ROOT/src/utils/logger.sh"
+# shellcheck source=src/utils/ui.sh
+. "$APPPILOT_ROOT/src/utils/ui.sh"
 # shellcheck source=src/core/output.sh
 . "$APPPILOT_ROOT/src/core/output.sh"
 # shellcheck source=src/utils/validator.sh
@@ -80,39 +82,34 @@ export APPPILOT_ROOT APPPILOT_JSON APPPILOT_QUIET APPPILOT_NON_INTERACTIVE APPPI
 . "$APPPILOT_ROOT/src/commands/adapters.sh"
 # shellcheck source=src/commands/validate.sh
 . "$APPPILOT_ROOT/src/commands/validate.sh"
+# shellcheck source=src/commands/overview.sh
+. "$APPPILOT_ROOT/src/commands/overview.sh"
 
 usage() {
-  cat <<'USAGE'
-AppPilot 0.1.0
-
-Usage:
-  apppilot [global flags] <command> [arguments]
-
-Commands:
-  init
-  add --name <name> --manager <pm2|compose> --path <path> [--entrypoint <file>|--compose-file <file>]
-  remove <app> [--yes]
-  list
-  start <app>
-  stop <app>
-  restart <app>
-  status <app>
-  logs <app> [--lines <n>]
-  doctor
-  security audit
-  adapters list
-  adapters install [pm2|compose|all] [--yes]
-  adapters updates
-  validate
-
-Global flags:
-  --json              Print machine-readable JSON only
-  --quiet             Suppress non-essential human output
-  --non-interactive   Never prompt for input
-  --dry-run           Show planned mutations without changing state
-  --help              Show this help
-  --version           Show version
-USAGE
+  ui_banner
+  ui_section "Usage"
+  printf '  apppilot [global flags] <command> [arguments]\n'
+  ui_section "Core"
+  printf '  %-34s %s\n' 'init' 'Create AppPilot config/state'
+  printf '  %-34s %s\n' 'overview' 'Show a screenshot-friendly summary'
+  printf '  %-34s %s\n' 'validate' 'Validate config and registry'
+  printf '  %-34s %s\n' 'doctor' 'Run host and app diagnostics'
+  printf '  %-34s %s\n' 'security audit' 'Run read-only security checks'
+  ui_section "Applications"
+  printf '  %-34s %s\n' 'add --name <app> ...' 'Register PM2 or Compose app'
+  printf '  %-34s %s\n' 'list' 'List registered apps'
+  printf '  %-34s %s\n' 'status|logs <app>' 'Inspect an app'
+  printf '  %-34s %s\n' 'start|stop|restart <app>' 'Manage an app'
+  printf '  %-34s %s\n' 'remove <app> --yes' 'Remove app from registry'
+  ui_section "Adapters"
+  printf '  %-34s %s\n' 'adapters list' 'Show PM2/Compose availability'
+  printf '  %-34s %s\n' 'adapters install [pm2|compose|all]' 'Install adapter dependencies'
+  printf '  %-34s %s\n' 'adapters updates' 'Check adapter update status'
+  ui_section "Global Flags"
+  printf '  %-18s %s\n' '--json' 'Print JSON only'
+  printf '  %-18s %s\n' '--quiet' 'Suppress decoration'
+  printf '  %-18s %s\n' '--non-interactive' 'Never prompt'
+  printf '  %-18s %s\n' '--dry-run' 'Plan mutations without changes'
 }
 
 parse_args() {
@@ -155,6 +152,7 @@ main() {
     security) cmd_security "${args[@]}" ;;
     adapters) cmd_adapters "${args[@]}" ;;
     validate) cmd_validate "${args[@]}" ;;
+    overview) cmd_overview "${args[@]}" ;;
     *) output_error "Unknown command: $command" "$APPPILOT_ERR_ARGS"; return "$APPPILOT_ERR_ARGS" ;;
   esac
 }

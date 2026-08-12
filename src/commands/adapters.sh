@@ -100,8 +100,7 @@ cmd_adapters() {
     return "$APPPILOT_OK"
   fi
 
-  [[ "${APPPILOT_QUIET:-0}" == "1" ]] || printf '%sAppPilot Adapters%s\n\n' "${APPPILOT_COLOR_BOLD:-}" "${APPPILOT_COLOR_RESET:-}"
-  printf '%-12s %-24s %-10s %s\n' "Name" "Type" "Status" "Required commands"
-  printf '%-12s %-24s %-10s %s\n' "pm2" "process-manager" "$(adapter_status_pm2)" "pm2"
-  printf '%-12s %-24s %-10s %s\n' "compose" "container-orchestrator" "$(adapter_status_compose)" "docker, docker compose"
+  [[ "${APPPILOT_QUIET:-0}" == "1" ]] || { ui_title "AppPilot Adapters"; printf '\n'; ui_table_header "Name" "Type" "Status" "Required commands"; }
+  printf '  %-14s %-24s %-12s %s\n' "pm2" "process-manager" "$(adapter_status_pm2)" "pm2"
+  printf '  %-14s %-24s %-12s %s\n' "compose" "container-orchestrator" "$(adapter_status_compose)" "docker, docker compose"
 }

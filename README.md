@@ -112,6 +112,7 @@ apppilot init
 Inspect the host:
 
 ```bash
+apppilot overview
 apppilot doctor
 ```
 
@@ -279,6 +280,7 @@ apppilot --help
 apppilot --version
 
 apppilot init
+apppilot overview
 
 apppilot add --name <name> --manager <pm2|compose> --path <path> [--entrypoint <file>|--compose-file <file>]
 apppilot remove <app> --yes
@@ -428,6 +430,7 @@ export APPPILOT_CONFIG_HOME="$tmp/config"
 export APPPILOT_STATE_HOME="$tmp/state"
 
 bash bin/apppilot --version
+bash bin/apppilot overview
 bash bin/apppilot init --non-interactive
 bash bin/apppilot list --json
 bash bin/apppilot validate --json

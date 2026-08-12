@@ -38,6 +38,7 @@ jobs:
           export APPPILOT_CONFIG_HOME="$tmp/config"
           export APPPILOT_STATE_HOME="$tmp/state"
           bash bin/apppilot init --non-interactive
+          json_smoke "apppilot overview --json" bash bin/apppilot overview --json
           json_smoke "apppilot list --json" bash bin/apppilot list --json
           json_smoke "apppilot validate --json" bash bin/apppilot validate --json
           json_smoke "apppilot doctor --json" bash bin/apppilot doctor --json

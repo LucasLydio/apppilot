@@ -43,12 +43,12 @@ cmd_validate() {
     return "$APPPILOT_OK"
   fi
 
-  [[ "${APPPILOT_QUIET:-0}" == "1" ]] || printf '%sAppPilot Validate%s\n\n' "${APPPILOT_COLOR_BOLD:-}" "${APPPILOT_COLOR_RESET:-}"
+  [[ "${APPPILOT_QUIET:-0}" == "1" ]] || { ui_title "AppPilot Validate"; printf '\n'; }
   while IFS='|' read -r status id message; do
     case "$status" in
-      ok) log_check "$message" ;;
-      warning) warnings=$((warnings + 1)); log_warn "$message" ;;
-      error) errors=$((errors + 1)); log_error "$message" ;;
+      ok) ui_status_line ok "$message" ;;
+      warning) warnings=$((warnings + 1)); ui_status_line warning "$message" ;;
+      error) errors=$((errors + 1)); ui_status_line error "$message" ;;
     esac
     : "$id"
   done <"$tmp"

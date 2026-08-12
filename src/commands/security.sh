@@ -33,13 +33,13 @@ cmd_security() {
     rm -f "$tmp"
     return "$APPPILOT_OK"
   else
-    [[ "${APPPILOT_QUIET:-0}" == "1" ]] || printf '%sAppPilot Security Audit%s\n\n' "${APPPILOT_COLOR_BOLD:-}" "${APPPILOT_COLOR_RESET:-}"
+    [[ "${APPPILOT_QUIET:-0}" == "1" ]] || { ui_title "AppPilot Security Audit"; printf '\n'; }
     local severity id message warnings=0
     while IFS='|' read -r severity id message; do
       case "$severity" in
-        ok) log_check "$message" ;;
-        warning) warnings=$((warnings + 1)); log_warn "$message" ;;
-        *) log_info "$message" ;;
+        ok) ui_status_line ok "$message" ;;
+        warning) warnings=$((warnings + 1)); ui_status_line warning "$message" ;;
+        *) ui_status_line info "$message" ;;
       esac
       : "$id"
     done <"$tmp"

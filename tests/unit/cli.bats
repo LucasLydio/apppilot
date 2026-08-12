@@ -14,6 +14,7 @@ load ../test_helper
   [[ "$output" == *"AppPilot 0.1.0"* ]]
   [[ "$output" == *"security audit"* ]]
   [[ "$output" == *"validate"* ]]
+  [[ "$output" == *"overview"* ]]
 }
 
 @test "unknown command returns stable invalid-argument exit code" {
@@ -36,6 +37,28 @@ load ../test_helper
   [ "$status" -eq 0 ]
   [[ "$output" == *'"data":{"apps":[]}'* ]]
   [[ "$output" != *'}},"warnings"'* ]]
+  teardown_apppilot_home
+}
+
+@test "overview renders human summary" {
+  setup_apppilot_home
+  run bash "$APPPILOT_BIN" init --non-interactive
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" overview
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"AppPilot"* ]]
+  [[ "$output" == *"Adapters"* ]]
+  teardown_apppilot_home
+}
+
+@test "overview supports json" {
+  setup_apppilot_home
+  run bash "$APPPILOT_BIN" init --non-interactive
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" overview --json
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'"appCount"'* ]]
+  [[ "$output" == *'"adapters"'* ]]
   teardown_apppilot_home
 }
 

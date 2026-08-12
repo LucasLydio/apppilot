@@ -11,15 +11,20 @@ cmd_list() {
   fi
 
   local name
+  local row_prefix="  "
+  [[ "${APPPILOT_QUIET:-0}" == "1" ]] && row_prefix=""
   if [[ "${APPPILOT_QUIET:-0}" != "1" ]]; then
-    printf '%sAppPilot Applications%s\n\n' "${APPPILOT_COLOR_BOLD:-}" "${APPPILOT_COLOR_RESET:-}"
+    ui_title "AppPilot Applications"
+    printf '\n'
   fi
   local found=0
+  [[ "${APPPILOT_QUIET:-0}" == "1" ]] || printf '  %-24s %-10s %s\n' "Name" "Manager" "Path"
+  [[ "${APPPILOT_QUIET:-0}" == "1" ]] || printf '  %-24s %-10s %s\n' "------------------------" "----------" "----------------"
   while IFS= read -r name; do
     [[ -n "$name" ]] || continue
     registry_load "$name" >/dev/null 2>&1 || continue
     found=1
-    printf '%-24s %-8s %s\n' "$APP_NAME" "$APP_MANAGER" "$APP_PATH"
+    printf '%s%-24s %-10s %s\n' "$row_prefix" "$APP_NAME" "$APP_MANAGER" "$APP_PATH"
   done < <(registry_names)
   [[ "$found" -eq 1 || "${APPPILOT_QUIET:-0}" == "1" ]] || printf 'No applications registered.\n'
 }
