@@ -76,7 +76,7 @@ cmd_logs() {
   shift || true
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
-      --lines) APPPILOT_LOG_LINES="${2:-80}"; shift 2 ;;
+      --lines) APPPILOT_LOG_LINES="${2:-80}"; export APPPILOT_LOG_LINES; shift 2 ;;
       *) output_error "Unknown logs argument: $1" "$APPPILOT_ERR_ARGS"; return "$APPPILOT_ERR_ARGS" ;;
     esac
   done
