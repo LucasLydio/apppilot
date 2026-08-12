@@ -127,6 +127,14 @@ Show built-in adapters and dependency status:
 apppilot adapters list
 ```
 
+Install missing adapter dependencies explicitly:
+
+```bash
+apppilot adapters install --dry-run
+apppilot adapters install pm2
+apppilot adapters install compose
+```
+
 List registered applications:
 
 ```bash
@@ -279,6 +287,8 @@ apppilot logs <app> [--lines <n>]
 apppilot doctor
 apppilot security audit
 apppilot adapters list
+apppilot adapters install [pm2|compose|all] [--yes]
+apppilot adapters updates
 ```
 
 Global flags:
@@ -347,6 +357,40 @@ Status values:
 - `missing`: required command support is unavailable
 
 `apppilot init` does not install PM2, Docker, or Docker Compose. It only creates AppPilot configuration and state directories.
+
+Install adapter dependencies explicitly:
+
+```bash
+apppilot adapters install --dry-run
+apppilot adapters install pm2
+apppilot adapters install compose
+apppilot adapters install all --yes --non-interactive
+```
+
+Default behavior:
+
+- `apppilot adapters install` installs dependencies for adapters that are missing or partial.
+- `apppilot adapters install pm2` installs Node/npm requirements and PM2.
+- `apppilot adapters install compose` installs Docker Engine and the Docker Compose plugin.
+- `apppilot adapters install all` attempts both adapters.
+
+Safety behavior:
+
+- Install commands support `--dry-run`.
+- Install commands require confirmation unless `--yes` is passed.
+- `--non-interactive` install commands require `--yes`.
+- System package installation currently supports Ubuntu/Debian with `apt`.
+- Docker installation uses Docker's official apt repository and GPG key, not `curl | bash`.
+- PM2 installation installs Node.js LTS from the NodeSource apt repository when Node/npm are missing or too old.
+- PM2 installation requires Node.js LTS 18+ before PM2 is installed.
+- The default Node.js LTS major can be overridden with `APPPILOT_NODE_LTS_MAJOR`.
+
+Check adapter updates:
+
+```bash
+apppilot adapters updates
+apppilot adapters updates --json
+```
 
 ## Development
 

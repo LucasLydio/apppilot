@@ -38,6 +38,8 @@ export APPPILOT_ROOT APPPILOT_JSON APPPILOT_QUIET APPPILOT_NON_INTERACTIVE APPPI
 . "$APPPILOT_ROOT/src/core/app-config.sh"
 # shellcheck source=src/core/registry.sh
 . "$APPPILOT_ROOT/src/core/registry.sh"
+# shellcheck source=src/core/adapter-deps.sh
+. "$APPPILOT_ROOT/src/core/adapter-deps.sh"
 # shellcheck source=src/host/packages.sh
 . "$APPPILOT_ROOT/src/host/packages.sh"
 # shellcheck source=src/host/detect.sh
@@ -97,6 +99,8 @@ Commands:
   doctor
   security audit
   adapters list
+  adapters install [pm2|compose|all] [--yes]
+  adapters updates
 
 Global flags:
   --json              Print machine-readable JSON only

@@ -41,3 +41,23 @@ load ../test_helper
   [[ "$output" == *'"name":"pm2"'* ]]
   [[ "$output" == *'"name":"compose"'* ]]
 }
+
+@test "adapters install supports dry run" {
+  run bash "$APPPILOT_BIN" adapters install pm2 --dry-run --non-interactive
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"DRY RUN"* ]]
+  [[ "$output" == *"pm2"* ]]
+}
+
+@test "adapters install non-interactive requires yes" {
+  run bash "$APPPILOT_BIN" adapters install pm2 --non-interactive
+  [ "$status" -eq 2 ]
+  [[ "$output" == *"requires --yes"* ]]
+}
+
+@test "adapters updates supports json" {
+  run bash "$APPPILOT_BIN" adapters updates --json
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'"pm2"'* ]]
+  [[ "$output" == *'"compose"'* ]]
+}

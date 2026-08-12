@@ -42,6 +42,8 @@ apppilot logs users-api --lines 100
 apppilot doctor
 apppilot security audit
 apppilot adapters list
+apppilot adapters install [pm2|compose|all] [--yes]
+apppilot adapters updates
 ```
 
 ## Exit Codes

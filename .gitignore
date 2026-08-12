@@ -10,3 +10,4 @@ node_modules/
 .config/apppilot/
 .local/state/apppilot/
 apppilot-v0.1-build-guide.md
+apppilot-next-steps-after-v0.1.md
