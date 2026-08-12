@@ -28,6 +28,17 @@ load ../test_helper
   [[ "$output" == '{"success":false'* ]]
 }
 
+@test "list json has valid success envelope" {
+  setup_apppilot_home
+  run bash "$APPPILOT_BIN" init --non-interactive
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" list --json
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'"data":{"apps":[]}'* ]]
+  [[ "$output" != *'}},"warnings"'* ]]
+  teardown_apppilot_home
+}
+
 @test "adapters list returns built-in adapters" {
   run bash "$APPPILOT_BIN" adapters list
   [ "$status" -eq 0 ]

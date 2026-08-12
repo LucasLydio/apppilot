@@ -13,9 +13,10 @@ output_error() {
 }
 
 output_success_json() {
-  local data="${1:-{}}"
+  local data="${1:-}"
   local warnings="${2:-[]}"
   local dry_run="${3:-false}"
+  [[ -n "$data" ]] || data="{}"
   printf '{"success":true,"dryRun":%s,"data":%s,"warnings":%s,"errors":[]}\n' \
     "$(json_bool "$dry_run")" "$data" "$warnings"
 }
