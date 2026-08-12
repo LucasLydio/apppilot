@@ -45,3 +45,7 @@ jobs:
           json_smoke "apppilot security audit --json" bash bin/apppilot security audit --json
           json_smoke "apppilot adapters list --json" bash bin/apppilot adapters list --json
           json_smoke "apppilot adapters install pm2 --dry-run --json" bash bin/apppilot adapters install pm2 --dry-run --json
+          printf 'PORT=3000\n' > tests/fixtures/pm2-app/.env.example
+          bash bin/apppilot add --name smoke-api --manager pm2 --path "$PWD/tests/fixtures/pm2-app" --entrypoint server.js --no-env-from-example --non-interactive
+          json_smoke "apppilot env init smoke-api --dry-run --json" bash bin/apppilot env init smoke-api --dry-run --json
+          rm -f tests/fixtures/pm2-app/.env.example

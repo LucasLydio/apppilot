@@ -25,11 +25,14 @@ apppilot add
 apppilot add --name users-api --manager pm2 --path /srv/users-api --entrypoint dist/main.js --env-from-example --non-interactive
 apppilot add --name users-api --manager pm2 --path /srv/users-api --entrypoint dist/main.js --non-interactive
 apppilot add --name ecommerce --manager compose --path /srv/ecommerce --compose-file compose.yaml --non-interactive
+apppilot env init users-api
 apppilot list
 apppilot remove users-api --yes --non-interactive
 ```
 
 Run `apppilot add` in a terminal for the guided registration flow. AppPilot asks for the app name, manager, project path, app file, and environment. If `.env.example` exists and `.env` does not, AppPilot can create `.env` from the example before registration. Choose `r` at the confirmation prompt to redo the answers.
+
+Use `apppilot env init <app>` to create `.env` from `.env.example` for an app that is already registered. It refuses to overwrite an existing `.env`.
 
 ## Operations
 

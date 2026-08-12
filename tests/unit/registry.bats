@@ -114,6 +114,71 @@ teardown() {
   [ -f "$project/.env" ]
 }
 
+@test "env init creates env for registered application" {
+  project="$APPPILOT_TEST_HOME/env-app"
+  mkdir -p "$project"
+  cp "$PROJECT_ROOT/tests/fixtures/pm2-app/server.js" "$project/server.js"
+  printf 'PORT=3000\nTOKEN=change-me\n' >"$project/.env.example"
+
+  run bash "$APPPILOT_BIN" init --non-interactive --quiet
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" add --name env-api --manager pm2 --path "$project" --entrypoint server.js --no-env-from-example --non-interactive
+  [ "$status" -eq 0 ]
+  [ ! -e "$project/.env" ]
+  run bash "$APPPILOT_BIN" env init env-api
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Created .env from .env.example"* ]]
+  [ -f "$project/.env" ]
+}
+
+@test "env init dry-run does not write env file" {
+  project="$APPPILOT_TEST_HOME/env-app"
+  mkdir -p "$project"
+  cp "$PROJECT_ROOT/tests/fixtures/pm2-app/server.js" "$project/server.js"
+  printf 'PORT=3000\n' >"$project/.env.example"
+
+  run bash "$APPPILOT_BIN" init --non-interactive --quiet
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" add --name env-api --manager pm2 --path "$project" --entrypoint server.js --no-env-from-example --non-interactive
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" env init env-api --dry-run
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"DRY RUN"* ]]
+  [ ! -e "$project/.env" ]
+}
+
+@test "env init refuses to overwrite existing env file" {
+  project="$APPPILOT_TEST_HOME/env-app"
+  mkdir -p "$project"
+  cp "$PROJECT_ROOT/tests/fixtures/pm2-app/server.js" "$project/server.js"
+  printf 'PORT=3000\n' >"$project/.env.example"
+  printf 'PORT=4000\n' >"$project/.env"
+
+  run bash "$APPPILOT_BIN" init --non-interactive --quiet
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" add --name env-api --manager pm2 --path "$project" --entrypoint server.js --no-env-from-example --non-interactive
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" env init env-api
+  [ "$status" -eq 6 ]
+  [[ "$output" == *".env already exists"* ]]
+  [ "$(cat "$project/.env")" = "PORT=4000" ]
+}
+
+@test "env init supports json output" {
+  project="$APPPILOT_TEST_HOME/env-app"
+  mkdir -p "$project"
+  cp "$PROJECT_ROOT/tests/fixtures/pm2-app/server.js" "$project/server.js"
+  printf 'PORT=3000\n' >"$project/.env.example"
+
+  run bash "$APPPILOT_BIN" init --non-interactive --quiet
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" add --name env-api --manager pm2 --path "$project" --entrypoint server.js --no-env-from-example --non-interactive
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" env init env-api --json
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'"created":true'* ]]
+}
+
 @test "list json has stable envelope" {
   fixture="$PROJECT_ROOT/tests/fixtures/compose-app"
   run bash "$APPPILOT_BIN" init --non-interactive

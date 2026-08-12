@@ -178,6 +178,16 @@ apppilot add \
   --non-interactive
 ```
 
+For an app that is already registered, create `.env` later with:
+
+```bash
+apppilot env init users-api
+nano /srv/users-api/.env
+apppilot restart users-api
+```
+
+`env init` never overwrites an existing `.env`.
+
 ### PM2 App
 
 Example project:
@@ -308,6 +318,7 @@ apppilot overview
 
 apppilot add
 apppilot add --name <name> --manager <pm2|compose> --path <path> [--entrypoint <file>|--compose-file <file>] [--env-from-example]
+apppilot env init <app>
 apppilot remove <app> --yes
 apppilot list
 

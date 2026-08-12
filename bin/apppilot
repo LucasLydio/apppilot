@@ -42,6 +42,8 @@ export APPPILOT_ROOT APPPILOT_JSON APPPILOT_QUIET APPPILOT_NON_INTERACTIVE APPPI
 . "$APPPILOT_ROOT/src/core/registry.sh"
 # shellcheck source=src/core/adapter-deps.sh
 . "$APPPILOT_ROOT/src/core/adapter-deps.sh"
+# shellcheck source=src/core/env-file.sh
+. "$APPPILOT_ROOT/src/core/env-file.sh"
 # shellcheck source=src/host/packages.sh
 . "$APPPILOT_ROOT/src/host/packages.sh"
 # shellcheck source=src/host/detect.sh
@@ -68,6 +70,8 @@ export APPPILOT_ROOT APPPILOT_JSON APPPILOT_QUIET APPPILOT_NON_INTERACTIVE APPPI
 . "$APPPILOT_ROOT/src/commands/init.sh"
 # shellcheck source=src/commands/add.sh
 . "$APPPILOT_ROOT/src/commands/add.sh"
+# shellcheck source=src/commands/env.sh
+. "$APPPILOT_ROOT/src/commands/env.sh"
 # shellcheck source=src/commands/list.sh
 . "$APPPILOT_ROOT/src/commands/list.sh"
 # shellcheck source=src/commands/remove.sh
@@ -98,6 +102,7 @@ usage() {
   ui_section "Applications"
   printf '  %-34s %s\n' 'add [--name <app> ...]' 'Register PM2 or Compose app'
   printf '  %-34s %s\n' 'add --env-from-example' 'Copy .env.example to .env'
+  printf '  %-34s %s\n' 'env init <app>' 'Create .env from .env.example'
   printf '  %-34s %s\n' 'list' 'List registered apps'
   printf '  %-34s %s\n' 'status <app> [--full]' 'Show app status table/details'
   printf '  %-34s %s\n' 'logs <app>' 'Show app logs'
@@ -143,6 +148,7 @@ main() {
     --version) printf '%s\n' "$APPPILOT_VERSION" ;;
     init) cmd_init "${args[@]}" ;;
     add) cmd_add "${args[@]}" ;;
+    env) cmd_env "${args[@]}" ;;
     remove) cmd_remove "${args[@]}" ;;
     list) cmd_list "${args[@]}" ;;
     start) cmd_start "${args[@]}" ;;
