@@ -29,11 +29,17 @@ cmd_add() {
     output_error "add requires --name, --manager, and --path" "$APPPILOT_ERR_ARGS"; return "$APPPILOT_ERR_ARGS"
   }
 
+  registry_validate_new "$name" "$manager" "$path" "$entrypoint" "$compose_file" || {
+    local code="$?"
+    case "$code" in
+      "$APPPILOT_ERR_ARGS") output_error "Invalid application registration arguments for '$name'" "$code" ;;
+      "$APPPILOT_ERR_CONFIG") output_error "Invalid application configuration for '$name'" "$code" ;;
+      *) output_error "Could not register application '$name'" "$code" ;;
+    esac
+    return "$code"
+  }
+
   if [[ "${APPPILOT_DRY_RUN:-0}" == "1" ]]; then
-    registry_validate_new "$name" "$manager" "$path" "$entrypoint" "$compose_file" || {
-      local code="$?"
-      output_error "Could not register application '$name'" "$code"; return "$code"
-    }
     if [[ "${APPPILOT_JSON:-0}" == "1" ]]; then
       output_success_json "{\"actions\":[\"register application $(json_escape "$name")\"]}" "[]" "true"
     else
@@ -47,7 +53,12 @@ cmd_add() {
   lock_acquire "add" "$name" || return "$?"
   registry_add "$name" "$manager" "$path" "$entrypoint" "$compose_file" "$environment" || {
     local code="$?"
-    output_error "Could not register application '$name'" "$code"; return "$code"
+    case "$code" in
+      "$APPPILOT_ERR_ARGS") output_error "Invalid application registration arguments for '$name'" "$code" ;;
+      "$APPPILOT_ERR_CONFIG") output_error "Invalid application configuration for '$name'" "$code" ;;
+      *) output_error "Could not register application '$name'" "$code" ;;
+    esac
+    return "$code"
   }
 
   if [[ "${APPPILOT_JSON:-0}" == "1" ]]; then

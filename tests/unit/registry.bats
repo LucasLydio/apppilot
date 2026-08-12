@@ -55,6 +55,7 @@ teardown() {
   [ "$status" -eq 0 ]
   run bash "$APPPILOT_BIN" add --name '../bad' --manager pm2 --path "$fixture" --entrypoint server.js --non-interactive
   [ "$status" -eq 2 ]
+  [ ! -e "$APPPILOT_CONFIG_HOME/apps/../bad.yml" ]
 }
 
 @test "add rejects duplicate application names" {
