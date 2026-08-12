@@ -201,7 +201,7 @@ teardown() {
   fake_bin="$APPPILOT_TEST_HOME/bin"
   mkdir -p "$fake_bin"
   printf '#!/usr/bin/env bash\ncase "$1" in jlist) printf "[]";; *) exit 0;; esac\n' >"$fake_bin/pm2"
-  printf '#!/usr/bin/env bash\ncat >/dev/null\nprintf "%%b\\n" "runtimeName\\tapppilot-users-api" "status\\tonline" "pmId\\t0" "pid\\t1234" "cpu\\t1%" "memoryBytes\\t52428800" "restarts\\t2" "uptimeSeconds\\t3660" "user\\tlucas" "interpreter\\tnode" "execMode\\tfork" "scriptPath\\t$PWD/tests/fixtures/pm2-app/server.js"\n' >"$fake_bin/node"
+  printf '#!/usr/bin/env bash\ncat >/dev/null\nprintf "%%b\\n" "runtimeName\\tapppilot-users-api" "status\\tonline" "pmId\\t0" "pid\\t1234" "cpu\\t1%%" "memoryBytes\\t52428800" "restarts\\t2" "uptimeSeconds\\t3660" "user\\tlucas" "interpreter\\tnode" "execMode\\tfork" "scriptPath\\t$PWD/tests/fixtures/pm2-app/server.js"\n' >"$fake_bin/node"
   chmod +x "$fake_bin/pm2" "$fake_bin/node"
   PATH="$fake_bin:$PATH"
   export PATH
@@ -213,8 +213,8 @@ teardown() {
   run bash "$APPPILOT_BIN" status users-api
   [ "$status" -eq 0 ]
   [[ "$output" == *"AppPilot Status"* ]]
-  [[ "$output" == *"┌"* ]]
-  [[ "$output" == *"│ users-api"* ]]
+  [[ "$output" == *"Name"*"Manager"*"Status"* ]]
+  [[ "$output" == *"users-api"*"pm2"*"online"* ]]
   [[ "$output" == *"online"* ]]
   [[ "$output" == *"50.0M"* ]]
   [[ "$output" == *"server.js"* ]]
