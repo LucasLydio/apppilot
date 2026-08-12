@@ -40,6 +40,14 @@ adapter_status() {
   esac
 }
 
+adapter_status_details() {
+  case "$APP_MANAGER" in
+    pm2) pm2_status_details ;;
+    compose) compose_status_details ;;
+    *) return "$APPPILOT_ERR_UNSUPPORTED" ;;
+  esac
+}
+
 adapter_logs() {
   case "$APP_MANAGER" in
     pm2) pm2_logs ;;

@@ -201,6 +201,7 @@ Manage it:
 ```bash
 apppilot start users-api
 apppilot status users-api
+apppilot status users-api --full
 apppilot restart users-api
 apppilot logs users-api --lines 100
 apppilot stop users-api
@@ -237,6 +238,7 @@ Manage it:
 ```bash
 apppilot start ecommerce
 apppilot status ecommerce
+apppilot status ecommerce --full
 apppilot restart ecommerce
 apppilot logs ecommerce
 apppilot stop ecommerce
@@ -300,7 +302,7 @@ apppilot list
 apppilot start <app>
 apppilot stop <app>
 apppilot restart <app>
-apppilot status <app>
+apppilot status <app> [--full]
 apppilot logs <app> [--lines <n>]
 
 apppilot doctor

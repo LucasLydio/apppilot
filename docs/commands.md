@@ -37,6 +37,7 @@ apppilot start users-api
 apppilot stop users-api
 apppilot restart users-api
 apppilot status users-api
+apppilot status users-api --full
 apppilot logs users-api --lines 100
 ```
 

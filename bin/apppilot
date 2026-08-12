@@ -98,7 +98,8 @@ usage() {
   ui_section "Applications"
   printf '  %-34s %s\n' 'add [--name <app> ...]' 'Register PM2 or Compose app'
   printf '  %-34s %s\n' 'list' 'List registered apps'
-  printf '  %-34s %s\n' 'status|logs <app>' 'Inspect an app'
+  printf '  %-34s %s\n' 'status <app> [--full]' 'Show app status table/details'
+  printf '  %-34s %s\n' 'logs <app>' 'Show app logs'
   printf '  %-34s %s\n' 'start|stop|restart <app>' 'Manage an app'
   printf '  %-34s %s\n' 'remove <app> --yes' 'Remove app from registry'
   ui_section "Adapters"
