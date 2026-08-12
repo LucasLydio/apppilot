@@ -19,15 +19,28 @@ jobs:
         run: bats tests/unit/cli.bats tests/unit/registry.bats
       - name: CLI smoke tests
         run: |
+          set -Eeuo pipefail
+          json_smoke() {
+            local label="$1"
+            shift
+            local output
+            output="$(mktemp)"
+            echo "::group::$label"
+            "$@" >"$output"
+            cat "$output"
+            jq -e . "$output" >/dev/null
+            echo "::endgroup::"
+          }
+
           bash bin/apppilot --help
           bash bin/apppilot --version
           tmp="$(mktemp -d)"
           export APPPILOT_CONFIG_HOME="$tmp/config"
           export APPPILOT_STATE_HOME="$tmp/state"
           bash bin/apppilot init --non-interactive
-          bash bin/apppilot list --json | jq .
-          bash bin/apppilot validate --json | jq .
-          bash bin/apppilot doctor --json | jq .
-          bash bin/apppilot security audit --json | jq .
-          bash bin/apppilot adapters list --json | jq .
-          bash bin/apppilot adapters install pm2 --dry-run --json | jq .
+          json_smoke "apppilot list --json" bash bin/apppilot list --json
+          json_smoke "apppilot validate --json" bash bin/apppilot validate --json
+          json_smoke "apppilot doctor --json" bash bin/apppilot doctor --json
+          json_smoke "apppilot security audit --json" bash bin/apppilot security audit --json
+          json_smoke "apppilot adapters list --json" bash bin/apppilot adapters list --json
+          json_smoke "apppilot adapters install pm2 --dry-run --json" bash bin/apppilot adapters install pm2 --dry-run --json
