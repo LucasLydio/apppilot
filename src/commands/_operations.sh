@@ -61,6 +61,77 @@ status_color() {
   esac
 }
 
+status_repeat() {
+  local char="$1"
+  local count="$2"
+  local value
+  printf -v value '%*s' "$count" ''
+  printf '%s' "${value// /$char}"
+}
+
+status_fit() {
+  local value="${1:-}"
+  local width="$2"
+  if [[ "${#value}" -gt "$width" ]]; then
+    printf '%s' "${value:0:$((width - 1))}~"
+  else
+    printf "%-${width}s" "$value"
+  fi
+}
+
+status_table_border() {
+  local kind="$1"
+  local left sep right width index
+  local -a widths=(22 8 10 8 7 8 8 8 8 18)
+  case "$kind" in
+    top) left="┌"; sep="┬"; right="┐" ;;
+    mid) left="├"; sep="┼"; right="┤" ;;
+    *) left="└"; sep="┴"; right="┘" ;;
+  esac
+
+  printf '  %s' "$left"
+  for index in "${!widths[@]}"; do
+    width="${widths[$index]}"
+    status_repeat "─" "$((width + 2))"
+    if [[ "$index" -lt "$((${#widths[@]} - 1))" ]]; then
+      printf '%s' "$sep"
+    else
+      printf '%s\n' "$right"
+    fi
+  done
+}
+
+status_table_row() {
+  local name="$1"
+  local manager="$2"
+  local status="$3"
+  local pid="$4"
+  local cpu="$5"
+  local memory="$6"
+  local restarts="$7"
+  local uptime="$8"
+  local services="$9"
+  local target="${10}"
+  local status_cell
+
+  status_cell="$(status_fit "$status" 10)"
+  printf '  │ %s │ %s │ ' "$(status_fit "$name" 22)" "$(status_fit "$manager" 8)"
+  case "$status" in
+    Status) printf '%s' "$status_cell" ;;
+    online|running|up) printf '%s%s%s' "${APPPILOT_COLOR_GREEN:-}" "$status_cell" "${APPPILOT_COLOR_RESET:-}" ;;
+    stopped|errored|error|offline) printf '%s%s%s' "${APPPILOT_COLOR_RED:-}" "$status_cell" "${APPPILOT_COLOR_RESET:-}" ;;
+    *) printf '%s%s%s' "${APPPILOT_COLOR_YELLOW:-}" "$status_cell" "${APPPILOT_COLOR_RESET:-}" ;;
+  esac
+  printf ' │ %s │ %s │ %s │ %s │ %s │ %s │ %s │\n' \
+    "$(status_fit "$pid" 8)" \
+    "$(status_fit "$cpu" 7)" \
+    "$(status_fit "$memory" 8)" \
+    "$(status_fit "$restarts" 8)" \
+    "$(status_fit "$uptime" 8)" \
+    "$(status_fit "$services" 8)" \
+    "$(status_fit "$target" 18)"
+}
+
 status_memory() {
   local bytes="${1:-0}"
   [[ "$bytes" =~ ^[0-9]+$ ]] || { printf '%s' "-"; return 0; }
@@ -117,13 +188,11 @@ status_print_table() {
 
   ui_title "AppPilot Status"
   printf '\n'
-  printf '  %-22s %-8s %-12s %-8s %-7s %-8s %-9s %-9s %-10s %s\n' \
-    "Name" "Manager" "Status" "PID" "CPU" "Memory" "Restarts" "Uptime" "Services" "Target"
-  printf '  %-22s %-8s %-12s %-8s %-7s %-8s %-9s %-9s %-10s %s\n' \
-    "----------------------" "--------" "------------" "--------" "-------" "--------" "---------" "---------" "----------" "----------------"
-  printf '  %-22s %-8s ' "$APP_NAME" "$APP_MANAGER"
-  printf '%-12s ' "$(status_color "$status")"
-  printf '%-8s %-7s %-8s %-9s %-9s %-10s %s\n' "$pid" "$cpu" "$memory" "$restarts" "$uptime" "$services" "$target"
+  status_table_border top
+  status_table_row "Name" "Manager" "Status" "PID" "CPU" "Memory" "Restarts" "Uptime" "Services" "Target"
+  status_table_border mid
+  status_table_row "$APP_NAME" "$APP_MANAGER" "$status" "$pid" "$cpu" "$memory" "$restarts" "$uptime" "$services" "$target"
+  status_table_border bottom
   if [[ "$runtime_name" != "-" && "$runtime_name" != "$APP_NAME" ]]; then
     printf '\n'
     ui_kv "Runtime name" "$runtime_name"

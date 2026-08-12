@@ -181,6 +181,8 @@ teardown() {
   run bash "$APPPILOT_BIN" status users-api
   [ "$status" -eq 0 ]
   [[ "$output" == *"AppPilot Status"* ]]
+  [[ "$output" == *"┌"* ]]
+  [[ "$output" == *"│ users-api"* ]]
   [[ "$output" == *"online"* ]]
   [[ "$output" == *"50.0M"* ]]
   [[ "$output" == *"server.js"* ]]
