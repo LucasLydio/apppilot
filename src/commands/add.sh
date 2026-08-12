@@ -21,6 +21,144 @@ add_prompt_value() {
   printf -v "$variable" '%s' "$answer"
 }
 
+add_prompt_tip() {
+  log_info "$1"
+  [[ -n "${2:-}" ]] && log_info "Example: $2"
+}
+
+add_prompt_name() {
+  local variable="$1"
+  local current="$2"
+  local value="$current"
+  local file
+
+  while true; do
+    add_prompt_tip "Use a short unique app name. Letters, numbers, dashes, and underscores are allowed." "users-api"
+    add_prompt_value value "Name" "$value" || return "$?"
+    if ! validator_name "$value"; then
+      log_warn "Name must start with a letter or number and use only letters, numbers, dashes, or underscores."
+      value="$current"
+      continue
+    fi
+    file="$(app_config_file_for "$value")"
+    if [[ -e "$file" ]]; then
+      log_warn "An application named '$value' is already registered. Choose another name."
+      value=""
+      continue
+    fi
+    printf -v "$variable" '%s' "$value"
+    return 0
+  done
+}
+
+add_prompt_manager() {
+  local variable="$1"
+  local current="$2"
+  local value="$current"
+
+  while true; do
+    [[ -n "$value" ]] || value="pm2"
+    add_prompt_tip "Choose how AppPilot will manage this project. Use pm2 for Node processes or compose for Docker Compose apps." "pm2"
+    add_prompt_value value "Manager (pm2/compose)" "$value" || return "$?"
+    if validator_manager "$value"; then
+      printf -v "$variable" '%s' "$value"
+      return 0
+    fi
+    log_warn "Manager must be exactly 'pm2' or 'compose'."
+    value="pm2"
+  done
+}
+
+add_prompt_project_path() {
+  local variable="$1"
+  local current="$2"
+  local value="$current"
+
+  while true; do
+    [[ -n "$value" ]] || value="$PWD"
+    add_prompt_tip "Use the absolute path to the project folder that already exists on this server." "$HOME/apps/users-api"
+    add_prompt_value value "Project path" "$value" || return "$?"
+    if ! validator_path_safe "$value"; then
+      log_warn "Path must be an absolute path like '$HOME/apps/users-api' and cannot contain '..'."
+      value=""
+      continue
+    fi
+    if [[ ! -d "$value" ]]; then
+      log_warn "Project path does not exist yet. Clone or create the project folder first."
+      value=""
+      continue
+    fi
+    printf -v "$variable" '%s' "$value"
+    return 0
+  done
+}
+
+add_prompt_entrypoint() {
+  local variable="$1"
+  local current="$2"
+  local project_path="$3"
+  local value="$current"
+
+  while true; do
+    add_prompt_tip "Use the PM2 entry file relative to the project folder. Do not start with '/'." "dist/main.js"
+    add_prompt_value value "Entrypoint" "$value" || return "$?"
+    if ! validator_relative_path_safe "$value"; then
+      log_warn "Entrypoint must be a relative file path and cannot contain '..'."
+      value="$current"
+      continue
+    fi
+    if [[ ! -f "$project_path/$value" || -L "$project_path/$value" ]]; then
+      log_warn "Entrypoint was not found inside the project folder."
+      value="$current"
+      continue
+    fi
+    printf -v "$variable" '%s' "$value"
+    return 0
+  done
+}
+
+add_prompt_compose_file() {
+  local variable="$1"
+  local current="$2"
+  local project_path="$3"
+  local value="$current"
+
+  while true; do
+    add_prompt_tip "Use the Compose file relative to the project folder. Common names are compose.yaml or docker-compose.yml." "compose.yaml"
+    add_prompt_value value "Compose file" "$value" || return "$?"
+    if ! validator_relative_path_safe "$value"; then
+      log_warn "Compose file must be a relative file path and cannot contain '..'."
+      value="$current"
+      continue
+    fi
+    if [[ ! -f "$project_path/$value" || -L "$project_path/$value" ]]; then
+      log_warn "Compose file was not found inside the project folder."
+      value="$current"
+      continue
+    fi
+    printf -v "$variable" '%s' "$value"
+    return 0
+  done
+}
+
+add_prompt_environment() {
+  local variable="$1"
+  local current="$2"
+  local value="$current"
+
+  while true; do
+    [[ -n "$value" ]] || value="production"
+    add_prompt_tip "Use a label for this app's runtime environment." "production"
+    add_prompt_value value "Environment" "$value" || return "$?"
+    if [[ -n "$value" ]]; then
+      printf -v "$variable" '%s' "$value"
+      return 0
+    fi
+    log_warn "Environment cannot be empty."
+    value="production"
+  done
+}
+
 add_default_entrypoint() {
   local path="$1"
   local candidate
@@ -110,38 +248,31 @@ add_collect_guided() {
     log_info "Press Enter to accept a value shown in brackets."
     printf '\n'
 
-    add_prompt_value ref_name "Name" "$ref_name" || return "$?"
-
-    while true; do
-      [[ -n "$ref_manager" ]] || ref_manager="pm2"
-      add_prompt_value ref_manager "Manager (pm2/compose)" "$ref_manager" || return "$?"
-      case "$ref_manager" in
-        pm2|compose) break ;;
-        *) log_warn "Manager must be pm2 or compose." ;;
-      esac
-    done
-
-    [[ -n "$ref_path" ]] || ref_path="$PWD"
-    add_prompt_value ref_path "Project path" "$ref_path" || return "$?"
+    add_prompt_name ref_name "$ref_name" || return "$?"
+    printf '\n'
+    add_prompt_manager ref_manager "$ref_manager" || return "$?"
+    printf '\n'
+    add_prompt_project_path ref_path "$ref_path" || return "$?"
+    printf '\n'
 
     if [[ "$ref_manager" == "pm2" ]]; then
       if [[ -z "$ref_entrypoint" ]]; then
         default_value="$(add_default_entrypoint "$ref_path")"
         ref_entrypoint="$default_value"
       fi
-      add_prompt_value ref_entrypoint "Entrypoint" "$ref_entrypoint" || return "$?"
+      add_prompt_entrypoint ref_entrypoint "$ref_entrypoint" "$ref_path" || return "$?"
       ref_compose_file=""
     else
       if [[ -z "$ref_compose_file" ]]; then
         default_value="$(add_default_compose_file "$ref_path")"
         ref_compose_file="$default_value"
       fi
-      add_prompt_value ref_compose_file "Compose file" "$ref_compose_file" || return "$?"
+      add_prompt_compose_file ref_compose_file "$ref_compose_file" "$ref_path" || return "$?"
       ref_entrypoint=""
     fi
+    printf '\n'
 
-    [[ -n "$ref_environment" ]] || ref_environment="production"
-    add_prompt_value ref_environment "Environment" "$ref_environment" || return "$?"
+    add_prompt_environment ref_environment "$ref_environment" || return "$?"
 
     add_print_summary "$ref_name" "$ref_manager" "$ref_path" "$ref_entrypoint" "$ref_compose_file" "$ref_environment"
     if add_confirm_registration; then
