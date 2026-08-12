@@ -1,0 +1,144 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+
+APPPILOT_VERSION="0.1.0"
+APPPILOT_JSON=0
+APPPILOT_QUIET=0
+APPPILOT_NON_INTERACTIVE=0
+APPPILOT_DRY_RUN=0
+
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+APPPILOT_ROOT="$(cd -- "$script_dir/.." && pwd)"
+export APPPILOT_ROOT APPPILOT_JSON APPPILOT_QUIET APPPILOT_NON_INTERACTIVE APPPILOT_DRY_RUN
+
+# shellcheck source=src/core/exit-codes.sh
+. "$APPPILOT_ROOT/src/core/exit-codes.sh"
+# shellcheck source=src/utils/json.sh
+. "$APPPILOT_ROOT/src/utils/json.sh"
+# shellcheck source=src/utils/colors.sh
+. "$APPPILOT_ROOT/src/utils/colors.sh"
+# shellcheck source=src/utils/logger.sh
+. "$APPPILOT_ROOT/src/utils/logger.sh"
+# shellcheck source=src/core/output.sh
+. "$APPPILOT_ROOT/src/core/output.sh"
+# shellcheck source=src/utils/validator.sh
+. "$APPPILOT_ROOT/src/utils/validator.sh"
+# shellcheck source=src/core/config.sh
+. "$APPPILOT_ROOT/src/core/config.sh"
+# shellcheck source=src/core/lock.sh
+. "$APPPILOT_ROOT/src/core/lock.sh"
+# shellcheck source=src/core/app-config.sh
+. "$APPPILOT_ROOT/src/core/app-config.sh"
+# shellcheck source=src/core/registry.sh
+. "$APPPILOT_ROOT/src/core/registry.sh"
+# shellcheck source=src/host/packages.sh
+. "$APPPILOT_ROOT/src/host/packages.sh"
+# shellcheck source=src/host/detect.sh
+. "$APPPILOT_ROOT/src/host/detect.sh"
+# shellcheck source=src/host/resources.sh
+. "$APPPILOT_ROOT/src/host/resources.sh"
+# shellcheck source=src/host/ports.sh
+. "$APPPILOT_ROOT/src/host/ports.sh"
+# shellcheck source=src/adapters/pm2.sh
+. "$APPPILOT_ROOT/src/adapters/pm2.sh"
+# shellcheck source=src/adapters/compose.sh
+. "$APPPILOT_ROOT/src/adapters/compose.sh"
+# shellcheck source=src/adapters/resolve.sh
+. "$APPPILOT_ROOT/src/adapters/resolve.sh"
+# shellcheck source=src/security/ssh-audit.sh
+. "$APPPILOT_ROOT/src/security/ssh-audit.sh"
+# shellcheck source=src/security/firewall-audit.sh
+. "$APPPILOT_ROOT/src/security/firewall-audit.sh"
+# shellcheck source=src/security/docker-audit.sh
+. "$APPPILOT_ROOT/src/security/docker-audit.sh"
+# shellcheck source=src/security/permissions-audit.sh
+. "$APPPILOT_ROOT/src/security/permissions-audit.sh"
+# shellcheck source=src/commands/init.sh
+. "$APPPILOT_ROOT/src/commands/init.sh"
+# shellcheck source=src/commands/add.sh
+. "$APPPILOT_ROOT/src/commands/add.sh"
+# shellcheck source=src/commands/list.sh
+. "$APPPILOT_ROOT/src/commands/list.sh"
+# shellcheck source=src/commands/remove.sh
+. "$APPPILOT_ROOT/src/commands/remove.sh"
+# shellcheck source=src/commands/_operations.sh
+. "$APPPILOT_ROOT/src/commands/_operations.sh"
+# shellcheck source=src/commands/doctor.sh
+. "$APPPILOT_ROOT/src/commands/doctor.sh"
+# shellcheck source=src/commands/security.sh
+. "$APPPILOT_ROOT/src/commands/security.sh"
+
+usage() {
+  cat <<'USAGE'
+AppPilot 0.1.0
+
+Usage:
+  apppilot [global flags] <command> [arguments]
+
+Commands:
+  init
+  add --name <name> --manager <pm2|compose> --path <path> [--entrypoint <file>|--compose-file <file>]
+  remove <app> [--yes]
+  list
+  start <app>
+  stop <app>
+  restart <app>
+  status <app>
+  logs <app> [--lines <n>]
+  doctor
+  security audit
+
+Global flags:
+  --json              Print machine-readable JSON only
+  --quiet             Suppress non-essential human output
+  --non-interactive   Never prompt for input
+  --dry-run           Show planned mutations without changing state
+  --help              Show this help
+  --version           Show version
+USAGE
+}
+
+parse_args() {
+  APPPILOT_POSITIONAL=()
+  while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+      --json) APPPILOT_JSON=1; shift ;;
+      --quiet) APPPILOT_QUIET=1; shift ;;
+      --non-interactive) APPPILOT_NON_INTERACTIVE=1; shift ;;
+      --dry-run) APPPILOT_DRY_RUN=1; shift ;;
+      --help|-h) APPPILOT_POSITIONAL+=("--help"); shift ;;
+      --version) APPPILOT_POSITIONAL+=("--version"); shift ;;
+      *) APPPILOT_POSITIONAL+=("$1"); shift ;;
+    esac
+  done
+  export APPPILOT_JSON APPPILOT_QUIET APPPILOT_NON_INTERACTIVE APPPILOT_DRY_RUN
+}
+
+main() {
+  parse_args "$@"
+  config_setup_paths
+  color_setup
+
+  local command="${APPPILOT_POSITIONAL[0]:---help}"
+  local args=("${APPPILOT_POSITIONAL[@]:1}")
+
+  case "$command" in
+    --help|-h) usage ;;
+    --version) printf '%s\n' "$APPPILOT_VERSION" ;;
+    init) cmd_init "${args[@]}" ;;
+    add) cmd_add "${args[@]}" ;;
+    remove) cmd_remove "${args[@]}" ;;
+    list) cmd_list "${args[@]}" ;;
+    start) cmd_start "${args[@]}" ;;
+    stop) cmd_stop "${args[@]}" ;;
+    restart) cmd_restart "${args[@]}" ;;
+    status) cmd_status "${args[@]}" ;;
+    logs) cmd_logs "${args[@]}" ;;
+    doctor) cmd_doctor "${args[@]}" ;;
+    security) cmd_security "${args[@]}" ;;
+    *) output_error "Unknown command: $command" "$APPPILOT_ERR_ARGS"; return "$APPPILOT_ERR_ARGS" ;;
+  esac
+}
+
+main "$@"

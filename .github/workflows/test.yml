@@ -1,0 +1,25 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck bats jq
+      - name: ShellCheck
+        run: shellcheck bin/apppilot src/**/*.sh install.sh uninstall.sh
+      - name: Bats unit tests
+        run: bats tests/unit
+      - name: CLI smoke tests
+        run: |
+          bash bin/apppilot --help
+          bash bin/apppilot --version
+          tmp="$(mktemp -d)"
+          APPPILOT_CONFIG_HOME="$tmp/config" APPPILOT_STATE_HOME="$tmp/state" bash bin/apppilot init --non-interactive

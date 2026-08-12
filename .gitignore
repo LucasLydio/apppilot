@@ -1,0 +1,12 @@
+.DS_Store
+*.log
+tmp/
+.tmp/
+coverage/
+node_modules/
+.bats-cache/
+
+# AppPilot runtime state belongs outside the repository.
+.config/apppilot/
+.local/state/apppilot/
+apppilot-v0.1-build-guide.md

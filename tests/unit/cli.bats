@@ -1,0 +1,28 @@
+#!/usr/bin/env bats
+
+load ../test_helper.bash
+
+@test "version prints v0.1.0" {
+  run bash "$APPPILOT_BIN" --version
+  [ "$status" -eq 0 ]
+  [ "$output" = "0.1.0" ]
+}
+
+@test "help prints command list" {
+  run bash "$APPPILOT_BIN" --help
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"AppPilot 0.1.0"* ]]
+  [[ "$output" == *"security audit"* ]]
+}
+
+@test "unknown command returns stable invalid-argument exit code" {
+  run bash "$APPPILOT_BIN" nope
+  [ "$status" -eq 2 ]
+  [[ "$output" == *"Unknown command"* ]]
+}
+
+@test "unknown command returns JSON error when requested" {
+  run bash "$APPPILOT_BIN" --json nope
+  [ "$status" -eq 2 ]
+  [[ "$output" == '{"success":false'* ]]
+}
