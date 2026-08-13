@@ -48,4 +48,5 @@ jobs:
           printf 'PORT=3000\n' > tests/fixtures/pm2-app/.env.example
           bash bin/apppilot add --name smoke-api --manager pm2 --path "$PWD/tests/fixtures/pm2-app" --entrypoint server.js --no-env-from-example --non-interactive
           json_smoke "apppilot env init smoke-api --dry-run --json" bash bin/apppilot env init smoke-api --dry-run --json
+          json_smoke "apppilot deploy smoke-api --dry-run --json" bash bin/apppilot deploy smoke-api --dry-run --json --allow-dirty
           rm -f tests/fixtures/pm2-app/.env.example

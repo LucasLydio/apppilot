@@ -179,6 +179,117 @@ teardown() {
   [[ "$output" == *'"created":true'* ]]
 }
 
+setup_fake_deploy_tools() {
+  fake_bin="$APPPILOT_TEST_HOME/bin"
+  mkdir -p "$fake_bin"
+  cat >"$fake_bin/git" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in
+  rev-parse) printf 'true\n' ;;
+  status) ;;
+  pull) printf 'git pull %s %s\n' "$2" "$3"; printf 'git pull %s %s\n' "$2" "$3" >>"$APPPILOT_TEST_HOME/order" ;;
+  *) printf 'git %s\n' "$*" ;;
+esac
+EOF
+  cat >"$fake_bin/npm" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in
+  ci|install) printf 'npm %s\n' "$1"; printf 'npm %s\n' "$1" >>"$APPPILOT_TEST_HOME/order" ;;
+  run)
+    printf 'npm run %s\n' "$2"
+    printf 'npm run %s\n' "$2" >>"$APPPILOT_TEST_HOME/order"
+    if [[ "$2" == "test" && "${FAKE_TEST_FAIL:-0}" == "1" ]]; then
+      printf 'tests failed\n' >&2
+      exit 1
+    fi
+    ;;
+esac
+EOF
+  cat >"$fake_bin/pm2" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in
+  restart) printf 'pm2 restart %s\n' "$2"; printf 'pm2 restart %s\n' "$2" >>"$APPPILOT_TEST_HOME/order" ;;
+  start) printf 'pm2 start\n'; printf 'pm2 start\n' >>"$APPPILOT_TEST_HOME/order" ;;
+  jlist) printf '[]' ;;
+  *) ;;
+esac
+EOF
+  cat >"$fake_bin/node" <<'EOF'
+#!/usr/bin/env bash
+cat >/dev/null
+printf "%b\n" "runtimeName\tapppilot-users-api" "status\tonline" "pmId\t0" "pid\t1234" "cpu\t1%" "memoryBytes\t52428800" "restarts\t0" "uptimeSeconds\t60" "user\tlucas" "interpreter\tnode" "execMode\tfork" "scriptPath\t-"
+EOF
+  chmod +x "$fake_bin/git" "$fake_bin/npm" "$fake_bin/pm2" "$fake_bin/node"
+  PATH="$fake_bin:$PATH"
+  export PATH
+}
+
+create_deploy_app() {
+  project="$APPPILOT_TEST_HOME/deploy-app"
+  mkdir -p "$project"
+  cp "$PROJECT_ROOT/tests/fixtures/pm2-app/server.js" "$project/server.js"
+  printf '{"scripts":{"test":"node --test","build":"echo build","start":"node server.js"}}\n' >"$project/package.json"
+  printf '{}\n' >"$project/package-lock.json"
+}
+
+@test "deploy dry-run plans origin main with tests before build" {
+  setup_fake_deploy_tools
+  create_deploy_app
+  run bash "$APPPILOT_BIN" init --non-interactive --quiet
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" add --name users-api --manager pm2 --path "$project" --entrypoint server.js --non-interactive
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" deploy users-api --dry-run
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"git pull origin main"* ]]
+  [[ "$output" == *"run test script"* ]]
+  [[ "$output" == *"run build script"* ]]
+  [[ "$output" == *"restart PM2 app"* ]]
+}
+
+@test "deploy dry-run supports custom remote and branch json" {
+  setup_fake_deploy_tools
+  create_deploy_app
+  run bash "$APPPILOT_BIN" init --non-interactive --quiet
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" add --name users-api --manager pm2 --path "$project" --entrypoint server.js --non-interactive
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" deploy users-api --remote upstream --branch develop --dry-run --json
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'"remote":"upstream"'* ]]
+  [[ "$output" == *'"branch":"develop"'* ]]
+  [[ "$output" == *'git pull upstream develop'* ]]
+}
+
+@test "deploy runs pull install test build and restart in order" {
+  setup_fake_deploy_tools
+  create_deploy_app
+  run bash "$APPPILOT_BIN" init --non-interactive --quiet
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" add --name users-api --manager pm2 --path "$project" --entrypoint server.js --non-interactive
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" deploy users-api
+  [ "$status" -eq 0 ]
+  expected=$'git pull origin main\nnpm ci\nnpm run test\nnpm run build\npm2 restart apppilot-users-api'
+  [ "$(cat "$APPPILOT_TEST_HOME/order")" = "$expected" ]
+}
+
+@test "deploy stops before build when tests fail" {
+  setup_fake_deploy_tools
+  create_deploy_app
+  export FAKE_TEST_FAIL=1
+  run bash "$APPPILOT_BIN" init --non-interactive --quiet
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" add --name users-api --manager pm2 --path "$project" --entrypoint server.js --non-interactive
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" deploy users-api
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Test script failed"* ]]
+  [[ "$(cat "$APPPILOT_TEST_HOME/order")" != *"npm run build"* ]]
+  [[ "$(cat "$APPPILOT_TEST_HOME/order")" != *"pm2 restart"* ]]
+  unset FAKE_TEST_FAIL
+}
+
 @test "list json has stable envelope" {
   fixture="$PROJECT_ROOT/tests/fixtures/compose-app"
   run bash "$APPPILOT_BIN" init --non-interactive

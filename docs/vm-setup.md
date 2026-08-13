@@ -80,7 +80,7 @@ npm install
 npm run build
 ```
 
-Tip: AppPilot v0.1 does not deploy from Git yet. Clone, install, and build the app first.
+Tip: AppPilot does not clone repositories yet. Clone the app first, then `apppilot deploy <app>` can pull, test, build, and restart it after registration.
 
 ## 5. Register The App
 
@@ -115,10 +115,26 @@ nano .env
 
 ```bash
 apppilot start tiny-api
+apppilot deploy tiny-api --dry-run
+apppilot deploy tiny-api
 apppilot status tiny-api
 apppilot status tiny-api --full
 apppilot logs tiny-api --lines 50
 ```
+
+Deploy defaults to:
+
+```bash
+git pull origin main
+```
+
+Use another remote or branch when needed:
+
+```bash
+apppilot deploy tiny-api --remote upstream --branch production
+```
+
+If `package.json` has a `test` script, deploy runs tests before build. A failed test stops the deploy before build and restart.
 
 If the app exposes a local port:
 

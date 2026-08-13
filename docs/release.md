@@ -37,6 +37,9 @@ bats tests/unit/cli.bats tests/unit/registry.bats
 - [ ] `apppilot env init <app>` works for an already-registered app
 - [ ] `apppilot env init <app>` refuses to overwrite `.env`
 - [ ] `apppilot start <app>` works for PM2 when PM2 is installed
+- [ ] `apppilot deploy <app> --dry-run` shows `git pull origin main`
+- [ ] `apppilot deploy <app>` runs tests before build when a test script exists
+- [ ] Failed tests stop deploy before build and restart
 - [ ] `apppilot status <app>` table is aligned
 - [ ] `apppilot status <app> --full` shows details
 - [ ] `apppilot logs <app> --lines 50` works

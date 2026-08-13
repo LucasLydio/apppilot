@@ -78,6 +78,8 @@ export APPPILOT_ROOT APPPILOT_JSON APPPILOT_QUIET APPPILOT_NON_INTERACTIVE APPPI
 . "$APPPILOT_ROOT/src/commands/remove.sh"
 # shellcheck source=src/commands/_operations.sh
 . "$APPPILOT_ROOT/src/commands/_operations.sh"
+# shellcheck source=src/commands/deploy.sh
+. "$APPPILOT_ROOT/src/commands/deploy.sh"
 # shellcheck source=src/commands/doctor.sh
 . "$APPPILOT_ROOT/src/commands/doctor.sh"
 # shellcheck source=src/commands/security.sh
@@ -107,6 +109,7 @@ usage() {
   printf '  %-34s %s\n' 'status <app> [--full]' 'Show app status table/details'
   printf '  %-34s %s\n' 'logs <app>' 'Show app logs'
   printf '  %-34s %s\n' 'start|stop|restart <app>' 'Manage an app'
+  printf '  %-34s %s\n' 'deploy <app>' 'Pull, test, build, restart'
   printf '  %-34s %s\n' 'remove <app> --yes' 'Remove app from registry'
   ui_section "Adapters"
   printf '  %-34s %s\n' 'adapters list' 'Show PM2/Compose availability'
@@ -154,6 +157,7 @@ main() {
     start) cmd_start "${args[@]}" ;;
     stop) cmd_stop "${args[@]}" ;;
     restart) cmd_restart "${args[@]}" ;;
+    deploy) cmd_deploy "${args[@]}" ;;
     status) cmd_status "${args[@]}" ;;
     logs) cmd_logs "${args[@]}" ;;
     doctor) cmd_doctor "${args[@]}" ;;

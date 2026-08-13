@@ -13,16 +13,19 @@ git clone app into ~/apps/tiny-api
 npm install / npm run build
 apppilot add
 apppilot env init tiny-api
-apppilot start tiny-api
+apppilot deploy tiny-api
 ```
 
-When `apppilot start tiny-api` runs, AppPilot:
+When `apppilot deploy tiny-api` runs, AppPilot:
 
 ```text
 loads ~/.config/apppilot/apps/tiny-api.yml
 validates the app path and entrypoint
-resolves the pm2 adapter
-runs PM2 with the deterministic runtime name apppilot-tiny-api
+checks the Git working tree
+runs git pull origin main by default
+runs package tests before build when a test script exists
+runs the build script when it exists
+restarts PM2 with the deterministic runtime name apppilot-tiny-api
 ```
 
 Typical Compose flow:
@@ -95,7 +98,7 @@ Quiet mode suppresses banners and decoration. Exit codes remain authoritative.
 AppPilot v0.1 deliberately avoids hidden automation:
 
 - It does not clone repositories.
-- It does not build applications.
+- It does not create project-specific build logic.
 - It does not edit SSH, firewall, Nginx, or SSL configuration.
 - It does not overwrite `.env`.
 - It does not print secret values.

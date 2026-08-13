@@ -1,0 +1,261 @@
+#!/usr/bin/env bash
+
+deploy_json_actions() {
+  local first=1 action
+  printf '['
+  for action in "$@"; do
+    [[ "$first" -eq 0 ]] && printf ','
+    first=0
+    json_string "$action"
+  done
+  printf ']'
+}
+
+deploy_fail_from_file() {
+  local message="$1"
+  local code="$2"
+  local file="$3"
+  local detail=""
+  [[ -s "$file" ]] && detail="$(tr '\n' ' ' <"$file")"
+  [[ -n "$detail" ]] && message="$message: $detail"
+  output_error "$message" "$code"
+  return "$code"
+}
+
+deploy_run_step() {
+  local label="$1"
+  shift
+  local tmp code
+  tmp="$(mktemp)"
+  if "$@" >"$tmp" 2>&1; then
+    if [[ "${APPPILOT_QUIET:-0}" != "1" ]]; then
+      log_check "$label"
+      [[ -s "$tmp" ]] && cat "$tmp"
+    fi
+    rm -f "$tmp"
+    return "$APPPILOT_OK"
+  else
+    code="$?"
+    deploy_fail_from_file "$label failed" "$code" "$tmp"
+    rm -f "$tmp"
+    return "$code"
+  fi
+}
+
+deploy_git_validate() {
+  command -v git >/dev/null 2>&1 || return "$APPPILOT_ERR_MISSING_DEP"
+  (cd "$APP_PATH" && git rev-parse --is-inside-work-tree >/dev/null 2>&1) || return "$APPPILOT_ERR_CONFIG"
+}
+
+deploy_git_dirty() {
+  [[ -n "$(cd "$APP_PATH" && git status --porcelain)" ]]
+}
+
+deploy_git_pull() {
+  local remote="$1"
+  local branch="$2"
+  (cd "$APP_PATH" && git pull "$remote" "$branch")
+}
+
+deploy_package_manager() {
+  if [[ -f "$APP_PATH/pnpm-lock.yaml" ]]; then
+    printf '%s\n' "pnpm"
+  elif [[ -f "$APP_PATH/yarn.lock" ]]; then
+    printf '%s\n' "yarn"
+  elif [[ -f "$APP_PATH/package.json" ]]; then
+    printf '%s\n' "npm"
+  fi
+}
+
+deploy_package_script_exists() {
+  local script="$1"
+  [[ -f "$APP_PATH/package.json" ]] || return 1
+  grep -Eq "\"$script\"[[:space:]]*:" "$APP_PATH/package.json"
+}
+
+deploy_install_deps() {
+  local manager="$1"
+  case "$manager" in
+    pnpm) (cd "$APP_PATH" && pnpm install --frozen-lockfile) ;;
+    yarn) (cd "$APP_PATH" && yarn install --frozen-lockfile) ;;
+    npm)
+      if [[ -f "$APP_PATH/package-lock.json" || -f "$APP_PATH/npm-shrinkwrap.json" ]]; then
+        (cd "$APP_PATH" && npm ci)
+      else
+        (cd "$APP_PATH" && npm install)
+      fi
+      ;;
+    *) return "$APPPILOT_ERR_MISSING_DEP" ;;
+  esac
+}
+
+deploy_run_package_script() {
+  local manager="$1"
+  local script="$2"
+  case "$manager" in
+    pnpm) (cd "$APP_PATH" && pnpm run "$script") ;;
+    yarn) (cd "$APP_PATH" && yarn run "$script") ;;
+    npm) (cd "$APP_PATH" && npm run "$script") ;;
+    *) return "$APPPILOT_ERR_MISSING_DEP" ;;
+  esac
+}
+
+deploy_restart_pm2() {
+  local tmp code
+  tmp="$(mktemp)"
+  if pm2_restart >"$tmp" 2>&1; then
+    [[ "${APPPILOT_QUIET:-0}" == "1" ]] || { log_check "Restarted $APP_NAME with PM2"; cat "$tmp"; }
+    rm -f "$tmp"
+    return "$APPPILOT_OK"
+  else
+    code="$?"
+  fi
+  rm -f "$tmp"
+  if [[ "$code" -eq "$APPPILOT_ERR_MISSING_DEP" ]]; then
+    return "$code"
+  fi
+  tmp="$(mktemp)"
+  if pm2_start >"$tmp" 2>&1; then
+    [[ "${APPPILOT_QUIET:-0}" == "1" ]] || { log_check "Started $APP_NAME with PM2"; cat "$tmp"; }
+    rm -f "$tmp"
+    return "$APPPILOT_OK"
+  fi
+  code="$?"
+  deploy_fail_from_file "PM2 restart/start failed" "$code" "$tmp"
+  rm -f "$tmp"
+  return "$code"
+}
+
+deploy_compose_build() {
+  docker compose -f "$APP_PATH/$APP_COMPOSE_FILE" -p "$APP_NAME" build
+}
+
+deploy_print_status() {
+  local tmp
+  [[ "${APPPILOT_JSON:-0}" == "1" || "${APPPILOT_QUIET:-0}" == "1" ]] && return 0
+  tmp="$(mktemp)"
+  if adapter_status_details >"$tmp" 2>/dev/null; then
+    printf '\n'
+    status_print_table "$tmp"
+  fi
+  rm -f "$tmp"
+}
+
+cmd_deploy() {
+  local app="" remote="origin" branch="main" skip_tests=0 skip_install=0 skip_build=0 allow_dirty=0
+  local package_manager="" has_tests=0 has_build=0
+  local -a actions=()
+
+  while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+      --remote) remote="${2:-origin}"; shift 2 ;;
+      --branch) branch="${2:-main}"; shift 2 ;;
+      --skip-tests) skip_tests=1; shift ;;
+      --skip-install) skip_install=1; shift ;;
+      --skip-build) skip_build=1; shift ;;
+      --allow-dirty) allow_dirty=1; shift ;;
+      --dry-run) APPPILOT_DRY_RUN=1; export APPPILOT_DRY_RUN; shift ;;
+      --json) APPPILOT_JSON=1; export APPPILOT_JSON; shift ;;
+      --quiet) APPPILOT_QUIET=1; export APPPILOT_QUIET; shift ;;
+      *) if [[ -z "$app" ]]; then app="$1"; shift; else output_error "deploy accepts one application name" "$APPPILOT_ERR_ARGS"; return "$APPPILOT_ERR_ARGS"; fi ;;
+    esac
+  done
+
+  [[ -n "$app" ]] || { output_error "deploy requires an application name" "$APPPILOT_ERR_ARGS"; return "$APPPILOT_ERR_ARGS"; }
+  registry_load "$app" || {
+    local code="$?"
+    output_error "Application not found or invalid: $app" "$code"
+    return "$code"
+  }
+
+  deploy_git_validate || {
+    local code="$?"
+    output_error "Application path must be a Git working tree for deploy: $APP_PATH" "$code"
+    return "$code"
+  }
+
+  if [[ "$allow_dirty" -ne 1 ]] && deploy_git_dirty; then
+    output_error "Working tree has uncommitted changes. Commit, stash, or use --allow-dirty." "$APPPILOT_ERR_CONFIG"
+    return "$APPPILOT_ERR_CONFIG"
+  fi
+
+  package_manager="$(deploy_package_manager)"
+  if [[ -n "$package_manager" ]]; then
+    deploy_package_script_exists test && has_tests=1
+    deploy_package_script_exists build && has_build=1
+  fi
+
+  actions+=("check Git working tree")
+  actions+=("git pull $remote $branch")
+  if [[ -n "$package_manager" && "$skip_install" -ne 1 ]]; then
+    actions+=("install dependencies with $package_manager")
+  fi
+  if [[ -n "$package_manager" && "$has_tests" -eq 1 && "$skip_tests" -ne 1 ]]; then
+    actions+=("run test script")
+  fi
+  if [[ "$APP_MANAGER" == "pm2" && -n "$package_manager" && "$has_build" -eq 1 && "$skip_build" -ne 1 ]]; then
+    actions+=("run build script")
+  elif [[ "$APP_MANAGER" == "compose" && "$skip_build" -ne 1 ]]; then
+    actions+=("build Docker Compose project")
+  fi
+  if [[ "$APP_MANAGER" == "pm2" ]]; then
+    actions+=("restart PM2 app")
+  else
+    actions+=("start Docker Compose project")
+  fi
+  actions+=("show status")
+
+  if [[ "${APPPILOT_DRY_RUN:-0}" == "1" ]]; then
+    if [[ "${APPPILOT_JSON:-0}" == "1" ]]; then
+      output_success_json "{\"app\":$(json_string "$APP_NAME"),\"manager\":$(json_string "$APP_MANAGER"),\"remote\":$(json_string "$remote"),\"branch\":$(json_string "$branch"),\"actions\":$(deploy_json_actions "${actions[@]}")}" "[]" "true"
+    else
+      output_dry_run_header
+      log_info "Would deploy: $APP_NAME"
+      log_info "Remote: $remote"
+      log_info "Branch: $branch"
+      local action
+      for action in "${actions[@]}"; do
+        log_info "- $action"
+      done
+      log_info ""
+      log_info "No changes were made."
+    fi
+    return "$APPPILOT_OK"
+  fi
+
+  lock_acquire "deploy" "$APP_NAME" || return "$?"
+
+  deploy_run_step "Pulled $remote $branch" deploy_git_pull "$remote" "$branch" || return "$?"
+
+  if [[ -n "$package_manager" && "$skip_install" -ne 1 ]]; then
+    deploy_run_step "Installed dependencies with $package_manager" deploy_install_deps "$package_manager" || return "$?"
+  fi
+
+  if [[ -n "$package_manager" && "$has_tests" -eq 1 && "$skip_tests" -ne 1 ]]; then
+    deploy_run_step "Test script" deploy_run_package_script "$package_manager" "test" || return "$?"
+  fi
+
+  if [[ "$APP_MANAGER" == "pm2" ]]; then
+    if [[ -n "$package_manager" && "$has_build" -eq 1 && "$skip_build" -ne 1 ]]; then
+      deploy_run_step "Build completed" deploy_run_package_script "$package_manager" "build" || return "$?"
+    fi
+    deploy_restart_pm2 || return "$?"
+  else
+    compose_validate || {
+      local code="$?"
+      output_error "Docker Compose is unavailable" "$code"
+      return "$code"
+    }
+    if [[ "$skip_build" -ne 1 ]]; then
+      deploy_run_step "Docker Compose build completed" deploy_compose_build || return "$?"
+    fi
+    deploy_run_step "Docker Compose project started" compose_start || return "$?"
+  fi
+
+  if [[ "${APPPILOT_JSON:-0}" == "1" ]]; then
+    output_success_json "{\"app\":$(json_string "$APP_NAME"),\"manager\":$(json_string "$APP_MANAGER"),\"remote\":$(json_string "$remote"),\"branch\":$(json_string "$branch"),\"deployed\":true,\"actions\":$(deploy_json_actions "${actions[@]}")}"
+  else
+    log_check "Deploy completed for $APP_NAME"
+    deploy_print_status
+  fi
+}

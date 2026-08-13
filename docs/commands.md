@@ -109,10 +109,16 @@ apppilot env init tiny-api --json
 apppilot start tiny-api
 apppilot stop tiny-api
 apppilot restart tiny-api
+apppilot deploy tiny-api
+apppilot deploy tiny-api --dry-run
+apppilot deploy tiny-api --remote origin --branch main
+apppilot deploy tiny-api --skip-tests
 apppilot status tiny-api
 apppilot status tiny-api --full
 apppilot logs tiny-api --lines 100
 ```
+
+`deploy` defaults to `git pull origin main`. If `package.json` has a `test` script, AppPilot runs it before build. If tests fail, deploy stops before build and restart. Use `--skip-tests` only when you intentionally want to bypass tests.
 
 PM2 apps are run with deterministic runtime names:
 

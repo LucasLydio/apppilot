@@ -25,13 +25,14 @@ Supported now:
 - Adapter dependency installation with dry-run and confirmation
 - Guided application registration with tips and examples
 - `.env.example` to `.env` initialization
+- Git pull, test, build, and restart with `apppilot deploy`
 - PM2 and Compose start, stop, restart, status, and logs
 - Human output for terminals and JSON output for scripts
 - Bats, ShellCheck, and GitHub Actions test coverage
 
 Not included in v0.1:
 
-- Git clone, build, and deploy automation
+- Git clone automation and full deployment pipelines
 - Nginx or SSL configuration
 - Firewall or SSH auto-hardening
 - Backups, rollbacks, dashboards, Kubernetes, or third-party plugins
@@ -282,6 +283,21 @@ Start the app:
 apppilot start tiny-api
 ```
 
+Deploy updates from Git, runs tests when a `test` script exists, builds, restarts, and shows status:
+
+```bash
+apppilot deploy tiny-api --dry-run
+apppilot deploy tiny-api
+```
+
+By default deploy pulls from `origin main`. Change that per deploy:
+
+```bash
+apppilot deploy tiny-api --remote upstream --branch production
+```
+
+Tip: if tests fail, deploy stops before build and restart. Use `--skip-tests` only when you deliberately want to bypass the test step.
+
 Check status:
 
 ```bash
@@ -293,11 +309,11 @@ Terminal screenshot:
 ```text
 AppPilot Status
 
-  +------------------------+----------+------------+----------+---------+----------+----------+----------+----------+--------------------+
-  | Name                   | Manager  | Status     | PID      | CPU     | Memory   | Restarts | Uptime   | Services | Target             |
-  +------------------------+----------+------------+----------+---------+----------+----------+----------+----------+--------------------+
-  | tiny-api               | pm2      | online     | 10045    | 3.2%    | 63.4M    | 0        | 0m       | -        | server.js          |
-  +------------------------+----------+------------+----------+---------+----------+----------+----------+----------+--------------------+
+  ┌────────────────────────┬──────────┬────────────┬──────────┬─────────┬──────────┬──────────┬──────────┬──────────┬────────────────────┐
+  │ Name                   │ Manager  │ Status     │ PID      │ CPU     │ Memory   │ Restarts │ Uptime   │ Services │ Target             │
+  ├────────────────────────┼──────────┼────────────┼──────────┼─────────┼──────────┼──────────┼──────────┼──────────┼────────────────────┤
+  │ tiny-api               │ pm2      │ online     │ 10045    │ 3.2%    │ 63.4M    │ 0        │ 0m       │ -        │ server.js          │
+  └────────────────────────┴──────────┴────────────┴──────────┴─────────┴──────────┴──────────┴──────────┴──────────┴────────────────────┘
 
   Runtime name       apppilot-tiny-api
 ```
@@ -405,6 +421,7 @@ Use `--dry-run` before changing state:
 apppilot adapters install pm2 --dry-run
 apppilot add --name tiny-api --manager pm2 --path /srv/tiny-api --entrypoint server.js --dry-run --non-interactive
 apppilot env init tiny-api --dry-run
+apppilot deploy tiny-api --dry-run
 apppilot restart tiny-api --dry-run
 ```
 
@@ -433,6 +450,7 @@ apppilot remove <app> --yes
 apppilot start <app>
 apppilot stop <app>
 apppilot restart <app>
+apppilot deploy <app> [--remote <name>] [--branch <branch>] [--skip-tests]
 apppilot status <app> [--full]
 apppilot logs <app> [--lines <n>]
 ```
