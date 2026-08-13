@@ -1,17 +1,49 @@
 # Architecture
 
-AppPilot owns orchestration, not implementation.
+AppPilot is a control layer for Linux VPS applications.
 
-It does not replace PM2 or Docker. It validates local configuration, resolves the registered application manager, and invokes the correct adapter through a stable CLI contract.
+It owns validation, registry state, command routing, output formatting, and safe orchestration. It does not replace PM2, Docker, Docker Compose, Git, Node, or the application framework.
 
-## Responsibilities
+## Flow
+
+Typical PM2 flow:
+
+```text
+git clone app into ~/apps/tiny-api
+npm install / npm run build
+apppilot add
+apppilot env init tiny-api
+apppilot start tiny-api
+```
+
+When `apppilot start tiny-api` runs, AppPilot:
+
+```text
+loads ~/.config/apppilot/apps/tiny-api.yml
+validates the app path and entrypoint
+resolves the pm2 adapter
+runs PM2 with the deterministic runtime name apppilot-tiny-api
+```
+
+Typical Compose flow:
+
+```text
+git clone app into ~/apps/ecommerce
+ensure compose.yaml exists
+apppilot add
+apppilot env init ecommerce
+apppilot start ecommerce
+```
+
+## Code Responsibilities
 
 - `bin/apppilot` parses global flags and routes commands.
-- `src/core` owns configuration paths, registry files, locks, exit codes, and output envelopes.
-- `src/commands` contains thin command handlers.
-- `src/adapters` contains manager-specific PM2 and Docker Compose behavior.
+- `src/commands` contains public command handlers.
+- `src/core` owns config paths, registry files, env file helpers, locks, exit codes, and output envelopes.
+- `src/adapters` contains PM2 and Docker Compose behavior.
 - `src/host` performs Linux host, resource, package, and port inspection.
 - `src/security` performs audit-only checks.
+- `src/utils` contains JSON, logging, colors, UI helpers, and validators.
 
 ## Runtime Data
 
@@ -31,11 +63,20 @@ Runtime state:
   locks/
 ```
 
-Both paths can be overridden with `APPPILOT_CONFIG_HOME` and `APPPILOT_STATE_HOME`, which tests use to avoid touching real user config.
+Application files stay in the application project:
+
+```text
+~/apps/tiny-api/
+  server.js
+  .env.example
+  .env
+```
 
 ## Output Modes
 
-Human output is readable and concise. JSON output uses a stable envelope:
+Human output is designed for terminal use and screenshots.
+
+JSON output uses a stable envelope:
 
 ```json
 {
@@ -47,4 +88,14 @@ Human output is readable and concise. JSON output uses a stable envelope:
 }
 ```
 
-Quiet mode suppresses banners and decoration; exit codes remain authoritative.
+Quiet mode suppresses banners and decoration. Exit codes remain authoritative.
+
+## Boundaries
+
+AppPilot v0.1 deliberately avoids hidden automation:
+
+- It does not clone repositories.
+- It does not build applications.
+- It does not edit SSH, firewall, Nginx, or SSL configuration.
+- It does not overwrite `.env`.
+- It does not print secret values.

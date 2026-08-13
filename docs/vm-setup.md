@@ -1,0 +1,138 @@
+# VM Setup Walkthrough
+
+This walkthrough mirrors the recommended first-run experience for WSL or a small Linux VPS.
+
+## 1. Install AppPilot
+
+```bash
+mkdir -p ~/projects
+cd ~/projects
+git clone https://github.com/LucasLydio/apppilot.git
+cd apppilot
+./install.sh
+hash -r
+```
+
+Expected command:
+
+```bash
+apppilot --version
+```
+
+## 2. Initialize AppPilot
+
+```bash
+apppilot init
+```
+
+Terminal screenshot:
+
+```text
++----------------------------------------------------------+
+|    ___              ____  _ _       _                    |
+|   / _ \ _ __  _ __ |  _ \(_) | ___ | |_                  |
+|  | |_| | '_ \| '_ \| |_) | | |/ _ \| __|                 |
+|  |  _  | |_) | |_) |  __/| | | (_) | |_                  |
+|  |_| |_| .__/| .__/|_|   |_|_|\___/ \__|                 |
+|        |_|   |_|                                         |
+|                                                          |
+| DevOps control for Linux VPS applications                |
+| Safe defaults. Adapter-based operations. JSON-ready.     |
++----------------------------------------------------------+
+
+Initialized
+  OK Config                 /home/lucaslydio/.config/apppilot
+  OK State                  /home/lucaslydio/.local/state/apppilot
+```
+
+Tip: initialization does not install PM2 or Docker. Use adapters for that.
+
+## 3. Install An Adapter
+
+```bash
+apppilot adapters list
+apppilot adapters install pm2 --dry-run
+apppilot adapters install pm2
+```
+
+For Docker Compose projects:
+
+```bash
+apppilot adapters install compose --dry-run
+apppilot adapters install compose
+```
+
+## 4. Clone A Real App
+
+Keep applications outside the AppPilot repository:
+
+```bash
+mkdir -p ~/apps
+cd ~/apps
+git clone <your-app-github-url> tiny-api
+cd tiny-api
+```
+
+Prepare it normally:
+
+```bash
+npm install
+npm run build
+```
+
+Tip: AppPilot v0.1 does not deploy from Git yet. Clone, install, and build the app first.
+
+## 5. Register The App
+
+```bash
+apppilot add
+```
+
+Use:
+
+```text
+Name: tiny-api
+Manager: pm2
+Project path: /home/lucaslydio/apps/tiny-api
+Entrypoint: server.js
+Environment: production
+```
+
+If `.env.example` exists, let AppPilot create `.env`, then edit it:
+
+```bash
+nano .env
+```
+
+For an app already registered before `.env.example` existed:
+
+```bash
+apppilot env init tiny-api
+nano .env
+```
+
+## 6. Start And Inspect
+
+```bash
+apppilot start tiny-api
+apppilot status tiny-api
+apppilot status tiny-api --full
+apppilot logs tiny-api --lines 50
+```
+
+If the app exposes a local port:
+
+```bash
+curl http://localhost:3000
+```
+
+## 7. Diagnose The VM
+
+```bash
+apppilot overview
+apppilot doctor
+apppilot security audit
+apppilot validate
+```
+
+Tip: `security audit` is read-only. It reports things to review, but it does not change SSH, firewall, Nginx, SSL, or Docker settings.
