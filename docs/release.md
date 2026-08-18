@@ -40,6 +40,9 @@ bats tests/unit/cli.bats tests/unit/registry.bats
 - [ ] `apppilot deploy <app> --dry-run` shows `git pull origin main`
 - [ ] `apppilot deploy <app>` runs tests before build when a test script exists
 - [ ] Failed tests stop deploy before build and restart
+- [ ] `apppilot deploy history <app>` shows the latest deploy records
+- [ ] `apppilot deploy rollback <app> --dry-run` shows the target revision
+- [ ] `apppilot deploy rollback <app>` resets Git and restarts the app
 - [ ] `apppilot status <app>` table is aligned
 - [ ] `apppilot status <app> --full` shows details
 - [ ] `apppilot logs <app> --lines 50` works

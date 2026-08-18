@@ -298,6 +298,20 @@ apppilot deploy tiny-api --remote upstream --branch production
 
 Tip: if tests fail, deploy stops before build and restart. Use `--skip-tests` only when you deliberately want to bypass the test step.
 
+Review deploy history or rollback the last deploy:
+
+```bash
+apppilot deploy history tiny-api
+apppilot deploy rollback tiny-api --dry-run
+apppilot deploy rollback tiny-api
+```
+
+Rollback uses the previous Git revision recorded by AppPilot, runs `git reset --hard`, and restarts the app. It refuses dirty working trees unless you pass `--allow-dirty`. To choose a specific commit:
+
+```bash
+apppilot deploy rollback tiny-api --to <commit-sha>
+```
+
 Check status:
 
 ```bash
@@ -450,7 +464,9 @@ apppilot remove <app> --yes
 apppilot start <app>
 apppilot stop <app>
 apppilot restart <app>
-apppilot deploy <app> [--remote <name>] [--branch <branch>] [--skip-tests]
+apppilot deploy <app> [--remote <name>] [--branch <branch>] [--skip-tests] [--skip-install] [--skip-build]
+apppilot deploy history <app>
+apppilot deploy rollback <app> [--to <commit-sha>] [--allow-dirty]
 apppilot status <app> [--full]
 apppilot logs <app> [--lines <n>]
 ```

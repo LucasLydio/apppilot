@@ -136,6 +136,23 @@ apppilot deploy tiny-api --remote upstream --branch production
 
 If `package.json` has a `test` script, deploy runs tests before build. A failed test stops the deploy before build and restart.
 
+Review deploy history:
+
+```bash
+apppilot deploy history tiny-api
+```
+
+Rollback the last deploy if the new revision is bad:
+
+```bash
+apppilot deploy rollback tiny-api --dry-run
+apppilot deploy rollback tiny-api
+```
+
+Tip: rollback uses the previous Git revision recorded by AppPilot. For a specific commit, run `apppilot deploy rollback tiny-api --to <commit-sha>`.
+
+Rollback refuses dirty working trees by default. Commit, stash, or intentionally pass `--allow-dirty` before resetting a repo with local changes.
+
 If the app exposes a local port:
 
 ```bash

@@ -110,6 +110,8 @@ usage() {
   printf '  %-34s %s\n' 'logs <app>' 'Show app logs'
   printf '  %-34s %s\n' 'start|stop|restart <app>' 'Manage an app'
   printf '  %-34s %s\n' 'deploy <app>' 'Pull, test, build, restart'
+  printf '  %-34s %s\n' 'deploy history <app>' 'Show deploy history'
+  printf '  %-34s %s\n' 'deploy rollback <app>' 'Rollback to a previous revision'
   printf '  %-34s %s\n' 'remove <app> --yes' 'Remove app from registry'
   ui_section "Adapters"
   printf '  %-34s %s\n' 'adapters list' 'Show PM2/Compose availability'

@@ -113,12 +113,20 @@ apppilot deploy tiny-api
 apppilot deploy tiny-api --dry-run
 apppilot deploy tiny-api --remote origin --branch main
 apppilot deploy tiny-api --skip-tests
+apppilot deploy tiny-api --skip-install
+apppilot deploy tiny-api --skip-build
+apppilot deploy history tiny-api
+apppilot deploy rollback tiny-api --dry-run
+apppilot deploy rollback tiny-api
+apppilot deploy rollback tiny-api --to <commit-sha>
 apppilot status tiny-api
 apppilot status tiny-api --full
 apppilot logs tiny-api --lines 100
 ```
 
 `deploy` defaults to `git pull origin main`. If `package.json` has a `test` script, AppPilot runs it before build. If tests fail, deploy stops before build and restart. Use `--skip-tests` only when you intentionally want to bypass tests.
+
+`deploy history` shows the latest deploy records stored by AppPilot. `deploy rollback` uses the previous recorded Git revision by default, runs `git reset --hard`, and restarts the app. It refuses dirty working trees unless you pass `--allow-dirty`. Use `--to <commit-sha>` when you want to rollback to a specific revision.
 
 PM2 apps are run with deterministic runtime names:
 
@@ -135,6 +143,7 @@ apppilot overview --json
 apppilot list --json
 apppilot status tiny-api --json
 apppilot env init tiny-api --dry-run --json
+apppilot deploy history tiny-api --json
 ```
 
 All JSON output uses the stable envelope:

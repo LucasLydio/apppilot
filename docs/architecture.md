@@ -26,6 +26,7 @@ runs git pull origin main by default
 runs package tests before build when a test script exists
 runs the build script when it exists
 restarts PM2 with the deterministic runtime name apppilot-tiny-api
+records deploy history under ~/.local/state/apppilot/deployments
 ```
 
 Typical Compose flow:
@@ -64,7 +65,10 @@ Runtime state:
 ```text
 ~/.local/state/apppilot/
   locks/
+  deployments/
 ```
+
+Deploy history files are tab-separated ledgers. They store timestamps, result, app, manager, remote, branch, previous revision, deployed revision, and final stage. Rollback reads this ledger to find the previous revision when `--to` is not provided.
 
 Application files stay in the application project:
 

@@ -29,7 +29,10 @@ Default state:
 ```text
 ~/.local/state/apppilot/
   locks/
+  deployments/
 ```
+
+`deployments/` stores deploy history used by `apppilot deploy history <app>` and the default target for `apppilot deploy rollback <app>`.
 
 Tests and automation can override these paths:
 

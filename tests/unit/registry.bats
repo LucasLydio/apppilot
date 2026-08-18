@@ -182,12 +182,30 @@ teardown() {
 setup_fake_deploy_tools() {
   fake_bin="$APPPILOT_TEST_HOME/bin"
   mkdir -p "$fake_bin"
+  printf '1111111111111111111111111111111111111111\n' >"$APPPILOT_TEST_HOME/revision"
   cat >"$fake_bin/git" <<'EOF'
 #!/usr/bin/env bash
 case "$1" in
-  rev-parse) printf 'true\n' ;;
+  rev-parse)
+    case "${2:-}" in
+      --is-inside-work-tree) printf 'true\n' ;;
+      HEAD) cat "$APPPILOT_TEST_HOME/revision" ;;
+      *) printf 'true\n' ;;
+    esac
+    ;;
   status) ;;
-  pull) printf 'git pull %s %s\n' "$2" "$3"; printf 'git pull %s %s\n' "$2" "$3" >>"$APPPILOT_TEST_HOME/order" ;;
+  pull)
+    printf '2222222222222222222222222222222222222222\n' >"$APPPILOT_TEST_HOME/revision"
+    printf 'git pull %s %s\n' "$2" "$3"
+    printf 'git pull %s %s\n' "$2" "$3" >>"$APPPILOT_TEST_HOME/order"
+    ;;
+  reset)
+    if [[ "${2:-}" == "--hard" ]]; then
+      printf '%s\n' "$3" >"$APPPILOT_TEST_HOME/revision"
+      printf 'git reset --hard %s\n' "$3"
+      printf 'git reset --hard %s\n' "$3" >>"$APPPILOT_TEST_HOME/order"
+    fi
+    ;;
   *) printf 'git %s\n' "$*" ;;
 esac
 EOF
@@ -274,6 +292,58 @@ create_deploy_app() {
   [ "$(cat "$APPPILOT_TEST_HOME/order")" = "$expected" ]
 }
 
+@test "deploy records success history with before and after revisions" {
+  setup_fake_deploy_tools
+  create_deploy_app
+  run bash "$APPPILOT_BIN" init --non-interactive --quiet
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" add --name users-api --manager pm2 --path "$project" --entrypoint server.js --non-interactive
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" deploy users-api
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" deploy history users-api
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Deploy History"* ]]
+  [[ "$output" == *"success"* ]]
+  [[ "$output" == *"111111111111"* ]]
+  [[ "$output" == *"222222222222"* ]]
+  [[ "$output" == *"complete"* ]]
+}
+
+@test "deploy rollback dry-run targets latest previous revision" {
+  setup_fake_deploy_tools
+  create_deploy_app
+  run bash "$APPPILOT_BIN" init --non-interactive --quiet
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" add --name users-api --manager pm2 --path "$project" --entrypoint server.js --non-interactive
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" deploy users-api
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" deploy rollback users-api --dry-run
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Would rollback: users-api"* ]]
+  [[ "$output" == *"Current: 222222222222"* ]]
+  [[ "$output" == *"Target:  111111111111"* ]]
+  [[ "$output" == *"git reset --hard 1111111111111111111111111111111111111111"* ]]
+}
+
+@test "deploy rollback resets revision and restarts app" {
+  setup_fake_deploy_tools
+  create_deploy_app
+  run bash "$APPPILOT_BIN" init --non-interactive --quiet
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" add --name users-api --manager pm2 --path "$project" --entrypoint server.js --non-interactive
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" deploy users-api
+  [ "$status" -eq 0 ]
+  : >"$APPPILOT_TEST_HOME/order"
+  run bash "$APPPILOT_BIN" deploy rollback users-api
+  [ "$status" -eq 0 ]
+  expected=$'git reset --hard 1111111111111111111111111111111111111111\npm2 restart apppilot-users-api'
+  [ "$(cat "$APPPILOT_TEST_HOME/order")" = "$expected" ]
+  [ "$(cat "$APPPILOT_TEST_HOME/revision")" = "1111111111111111111111111111111111111111" ]
+}
+
 @test "deploy stops before build when tests fail" {
   setup_fake_deploy_tools
   create_deploy_app
@@ -287,6 +357,10 @@ create_deploy_app() {
   [[ "$output" == *"Test script failed"* ]]
   [[ "$(cat "$APPPILOT_TEST_HOME/order")" != *"npm run build"* ]]
   [[ "$(cat "$APPPILOT_TEST_HOME/order")" != *"pm2 restart"* ]]
+  run bash "$APPPILOT_BIN" deploy history users-api
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"failed"* ]]
+  [[ "$output" == *"test"* ]]
   unset FAKE_TEST_FAIL
 }
 
