@@ -67,6 +67,7 @@ Runtime state:
 ~/.local/state/apppilot/
   locks/
   deployments/
+  backups/
 ```
 
 Deploy history files are tab-separated ledgers. They store timestamps, result, app, manager, remote, branch, previous revision, deployed revision, and final stage. Rollback reads this ledger to find the previous revision when `--to` is not provided.

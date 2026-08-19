@@ -30,9 +30,12 @@ Default state:
 ~/.local/state/apppilot/
   locks/
   deployments/
+  backups/
 ```
 
 `deployments/` stores deploy history used by `apppilot deploy history <app>` and the default target for `apppilot deploy rollback <app>`.
+
+`backups/` stores app snapshot archives created by `apppilot backup snapshot <app>`.
 
 Tests and automation can override these paths:
 

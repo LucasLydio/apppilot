@@ -15,8 +15,8 @@ cmd_adapters_install() {
 
   case "$target" in
     missing) while IFS= read -r item; do [[ -n "$item" ]] && targets+=("$item"); done < <(adapters_missing_targets) ;;
-    all) targets=("git" "pm2" "compose") ;;
-    git|pm2|compose) targets=("$target") ;;
+    all) targets=("git" "nginx" "certbot" "pm2" "compose") ;;
+    git|nginx|certbot|pm2|compose) targets=("$target") ;;
     *) output_error "Unknown adapter: $target" "$APPPILOT_ERR_ARGS"; return "$APPPILOT_ERR_ARGS" ;;
   esac
 
@@ -76,11 +76,13 @@ cmd_adapters_install() {
 cmd_adapters_updates() {
   [[ "$#" -eq 0 ]] || { output_error "adapters updates does not accept arguments" "$APPPILOT_ERR_ARGS"; return "$APPPILOT_ERR_ARGS"; }
   if [[ "${APPPILOT_JSON:-0}" == "1" ]]; then
-    output_success_json "{\"git\":$(json_string "$(adapter_git_update_status)"),\"pm2\":$(json_string "$(adapter_pm2_update_status)"),\"compose\":$(json_string "$(adapter_compose_update_status)")}"
+    output_success_json "{\"git\":$(json_string "$(adapter_git_update_status)"),\"nginx\":$(json_string "$(adapter_nginx_update_status)"),\"certbot\":$(json_string "$(adapter_certbot_update_status)"),\"pm2\":$(json_string "$(adapter_pm2_update_status)"),\"compose\":$(json_string "$(adapter_compose_update_status)")}"
     return "$APPPILOT_OK"
   fi
   [[ "${APPPILOT_QUIET:-0}" == "1" ]] || printf '%sAppPilot Adapter Updates%s\n\n' "${APPPILOT_COLOR_BOLD:-}" "${APPPILOT_COLOR_RESET:-}"
   printf '%-12s %s\n' "git" "$(adapter_git_update_status)"
+  printf '%-12s %s\n' "nginx" "$(adapter_nginx_update_status)"
+  printf '%-12s %s\n' "certbot" "$(adapter_certbot_update_status)"
   printf '%-12s %s\n' "pm2" "$(adapter_pm2_update_status)"
   printf '%-12s %s\n' "compose" "$(adapter_compose_update_status)"
 }
@@ -103,6 +105,8 @@ cmd_adapters() {
 
   [[ "${APPPILOT_QUIET:-0}" == "1" ]] || { ui_title "AppPilot Adapters"; printf '\n'; ui_table_header "Name" "Type" "Status" "Required commands"; }
   printf '  %-14s %-24s %-12s %s\n' "git" "source-control" "$(adapter_status_git)" "git"
+  printf '  %-14s %-24s %-12s %s\n' "nginx" "reverse-proxy" "$(adapter_status_nginx)" "nginx"
+  printf '  %-14s %-24s %-12s %s\n' "certbot" "ssl" "$(adapter_status_certbot)" "certbot"
   printf '  %-14s %-24s %-12s %s\n' "pm2" "process-manager" "$(adapter_status_pm2)" "pm2"
   printf '  %-14s %-24s %-12s %s\n' "compose" "container-orchestrator" "$(adapter_status_compose)" "docker, docker compose"
 }

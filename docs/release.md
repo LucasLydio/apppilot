@@ -25,7 +25,10 @@ bats tests/unit/cli.bats tests/unit/registry.bats
 - [ ] `apppilot doctor` runs without crashing
 - [ ] `apppilot security audit` is read-only
 - [ ] `apppilot adapters list` shows Git, PM2, and Compose
+- [ ] `apppilot adapters list` shows Nginx and Certbot
 - [ ] `apppilot adapters install git --dry-run` is clear
+- [ ] `apppilot adapters install nginx --dry-run` is clear
+- [ ] `apppilot adapters install certbot --dry-run` is clear
 - [ ] `apppilot adapters install pm2 --dry-run` is clear
 - [ ] `apppilot adapters install compose --dry-run` is clear
 
@@ -45,6 +48,11 @@ bats tests/unit/cli.bats tests/unit/registry.bats
 - [ ] `apppilot deploy history <app>` shows the latest deploy records
 - [ ] `apppilot deploy rollback <app> --dry-run` shows the target revision
 - [ ] `apppilot deploy rollback <app>` resets Git and restarts the app
+- [ ] `apppilot health <app>` checks runtime status
+- [ ] `apppilot health <app> --url <url>` checks HTTP response
+- [ ] `apppilot backup snapshot <app> --dry-run` shows backup exclusions
+- [ ] `apppilot backup snapshot <app>` creates a snapshot archive
+- [ ] `apppilot backup list <app>` shows snapshot archives
 - [ ] `apppilot status <app>` table is aligned
 - [ ] `apppilot status <app> --full` shows details
 - [ ] `apppilot logs <app> --lines 50` works

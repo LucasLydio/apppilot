@@ -84,6 +84,10 @@ export APPPILOT_ROOT APPPILOT_JSON APPPILOT_QUIET APPPILOT_NON_INTERACTIVE APPPI
 . "$APPPILOT_ROOT/src/commands/v0.2/deploy-history.sh"
 # shellcheck source=src/commands/v0.2/clone.sh
 . "$APPPILOT_ROOT/src/commands/v0.2/clone.sh"
+# shellcheck source=src/commands/v0.2/health.sh
+. "$APPPILOT_ROOT/src/commands/v0.2/health.sh"
+# shellcheck source=src/commands/v0.2/backup.sh
+. "$APPPILOT_ROOT/src/commands/v0.2/backup.sh"
 # shellcheck source=src/commands/doctor.sh
 . "$APPPILOT_ROOT/src/commands/doctor.sh"
 # shellcheck source=src/commands/security.sh
@@ -112,15 +116,18 @@ usage() {
   printf '  %-34s %s\n' 'clone <repo> <name>' 'Clone an app into ~/apps'
   printf '  %-34s %s\n' 'list' 'List registered apps'
   printf '  %-34s %s\n' 'status <app> [--full]' 'Show app status table/details'
+  printf '  %-34s %s\n' 'health <app> [--url <url>]' 'Check runtime and HTTP health'
   printf '  %-34s %s\n' 'logs <app>' 'Show app logs'
   printf '  %-34s %s\n' 'start|stop|restart <app>' 'Manage an app'
   printf '  %-34s %s\n' 'deploy <app>' 'Pull, test, build, restart'
   printf '  %-34s %s\n' 'deploy history <app>' 'Show deploy history'
   printf '  %-34s %s\n' 'deploy rollback <app>' 'Rollback to a previous revision'
+  printf '  %-34s %s\n' 'backup snapshot <app>' 'Create an app backup archive'
+  printf '  %-34s %s\n' 'backup list <app>' 'List backup snapshots'
   printf '  %-34s %s\n' 'remove <app> --yes' 'Remove app from registry'
   ui_section "Adapters"
-  printf '  %-34s %s\n' 'adapters list' 'Show Git/PM2/Compose availability'
-  printf '  %-34s %s\n' 'adapters install [git|pm2|compose|all]' 'Install adapter dependencies'
+  printf '  %-34s %s\n' 'adapters list' 'Show adapter availability'
+  printf '  %-34s %s\n' 'adapters install [git|nginx|certbot|pm2|compose|all]' 'Install adapter dependencies'
   printf '  %-34s %s\n' 'adapters updates' 'Check adapter update status'
   ui_section "Global Flags"
   printf '  %-18s %s\n' '--json' 'Print JSON only'
@@ -167,7 +174,9 @@ main() {
     restart) cmd_restart "${args[@]}" ;;
     deploy) cmd_deploy "${args[@]}" ;;
     status) cmd_status "${args[@]}" ;;
+    health) cmd_health "${args[@]}" ;;
     logs) cmd_logs "${args[@]}" ;;
+    backup) cmd_backup "${args[@]}" ;;
     doctor) cmd_doctor "${args[@]}" ;;
     security) cmd_security "${args[@]}" ;;
     adapters) cmd_adapters "${args[@]}" ;;

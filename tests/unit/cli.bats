@@ -16,6 +16,8 @@ load ../test_helper
   [[ "$output" == *"validate"* ]]
   [[ "$output" == *"overview"* ]]
   [[ "$output" == *"clone <repo> <name>"* ]]
+  [[ "$output" == *"health <app>"* ]]
+  [[ "$output" == *"backup snapshot <app>"* ]]
 }
 
 @test "unknown command returns stable invalid-argument exit code" {
@@ -67,6 +69,8 @@ load ../test_helper
   run bash "$APPPILOT_BIN" adapters list
   [ "$status" -eq 0 ]
   [[ "$output" == *"git"* ]]
+  [[ "$output" == *"nginx"* ]]
+  [[ "$output" == *"certbot"* ]]
   [[ "$output" == *"pm2"* ]]
   [[ "$output" == *"compose"* ]]
 }
@@ -76,6 +80,8 @@ load ../test_helper
   [ "$status" -eq 0 ]
   [[ "$output" == *'"adapters"'* ]]
   [[ "$output" == *'"name":"git"'* ]]
+  [[ "$output" == *'"name":"nginx"'* ]]
+  [[ "$output" == *'"name":"certbot"'* ]]
   [[ "$output" == *'"name":"pm2"'* ]]
   [[ "$output" == *'"name":"compose"'* ]]
 }
@@ -97,6 +103,8 @@ load ../test_helper
   run bash "$APPPILOT_BIN" adapters updates --json
   [ "$status" -eq 0 ]
   [[ "$output" == *'"git"'* ]]
+  [[ "$output" == *'"nginx"'* ]]
+  [[ "$output" == *'"certbot"'* ]]
   [[ "$output" == *'"pm2"'* ]]
   [[ "$output" == *'"compose"'* ]]
 }

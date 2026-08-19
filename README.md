@@ -160,6 +160,8 @@ AppPilot Adapters
   Name           Type                     Status       Required commands
   -------------- ------------------------ ------------ ----------------
   git            source-control           installed    git
+  nginx          reverse-proxy            missing      nginx
+  certbot        ssl                      missing      certbot
   pm2            process-manager          missing      pm2
   compose        container-orchestrator   partial      docker, docker compose
 ```
@@ -174,6 +176,8 @@ Install what you need:
 
 ```bash
 apppilot adapters install git
+apppilot adapters install nginx
+apppilot adapters install certbot
 apppilot adapters install pm2
 apppilot adapters install compose
 ```
@@ -471,7 +475,7 @@ apppilot security audit
 apppilot validate
 
 apppilot adapters list
-apppilot adapters install [git|pm2|compose|all] [--yes]
+apppilot adapters install [git|nginx|certbot|pm2|compose|all] [--yes]
 apppilot adapters updates
 
 apppilot clone <repo> <name> [--path <destination>] [--branch <branch>]
@@ -487,6 +491,9 @@ apppilot restart <app>
 apppilot deploy <app> [--remote <name>] [--branch <branch>] [--skip-tests] [--skip-install] [--skip-build]
 apppilot deploy history <app>
 apppilot deploy rollback <app> [--to <commit-sha>] [--allow-dirty]
+apppilot health <app> [--url <url>]
+apppilot backup snapshot <app> [--include-env]
+apppilot backup list <app>
 apppilot status <app> [--full]
 apppilot logs <app> [--lines <n>]
 ```

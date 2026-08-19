@@ -18,6 +18,8 @@ New adapter surface:
 ```bash
 apppilot adapters list
 apppilot adapters install git
+apppilot adapters install nginx
+apppilot adapters install certbot
 apppilot adapters updates
 ```
 
@@ -33,6 +35,18 @@ apppilot deploy users-api --dry-run
 ```
 
 `clone` does not register the app yet. Registration still uses `apppilot add` so the user can confirm manager, entrypoint, Compose file, and environment.
+
+Infrastructure commands started in v0.2:
+
+```bash
+apppilot health <app>
+apppilot health <app> --url http://localhost:3000
+apppilot backup snapshot <app>
+apppilot backup snapshot <app> --include-env
+apppilot backup list <app>
+```
+
+Release-folder rollback is documented in `docs/v0.2-release-folders.md`. The current rollback command remains Git-reset based until an app is explicitly migrated.
 
 ## v0.1.0
 

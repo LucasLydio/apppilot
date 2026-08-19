@@ -42,13 +42,15 @@ apppilot security audit
 apppilot adapters list
 apppilot adapters install --dry-run
 apppilot adapters install git
+apppilot adapters install nginx
+apppilot adapters install certbot
 apppilot adapters install pm2
 apppilot adapters install compose
 apppilot adapters install all --yes --non-interactive
 apppilot adapters updates
 ```
 
-Tip: Git is required for clone and deploy. Use PM2 for Node apps with an entrypoint such as `server.js` or `dist/main.js`. Use Compose for projects with `compose.yaml` or `docker-compose.yml`.
+Tip: Git is required for clone and deploy. Nginx and Certbot are installable adapters, but AppPilot does not write proxy or SSL config automatically yet. Use PM2 for Node apps with an entrypoint such as `server.js` or `dist/main.js`. Use Compose for projects with `compose.yaml` or `docker-compose.yml`.
 
 ## Clone
 
@@ -136,6 +138,11 @@ apppilot deploy history tiny-api
 apppilot deploy rollback tiny-api --dry-run
 apppilot deploy rollback tiny-api
 apppilot deploy rollback tiny-api --to <commit-sha>
+apppilot health tiny-api
+apppilot health tiny-api --url http://localhost:3000
+apppilot backup snapshot tiny-api
+apppilot backup snapshot tiny-api --include-env
+apppilot backup list tiny-api
 apppilot status tiny-api
 apppilot status tiny-api --full
 apppilot logs tiny-api --lines 100
@@ -144,6 +151,8 @@ apppilot logs tiny-api --lines 100
 `deploy` defaults to `git pull origin main`. If `package.json` has a `test` script, AppPilot runs it before build. If tests fail, deploy stops before build and restart. Use `--skip-tests` only when you intentionally want to bypass tests.
 
 `deploy history` shows the latest deploy records stored by AppPilot. `deploy rollback` uses the previous recorded Git revision by default, runs `git reset --hard`, and restarts the app. It refuses dirty working trees unless you pass `--allow-dirty`. Use `--to <commit-sha>` when you want to rollback to a specific revision.
+
+`health` checks the registered runtime status and can optionally request an HTTP URL. `backup snapshot` creates a `.tar.gz` archive under AppPilot state, excluding `.git`, `node_modules`, and `.env` unless `--include-env` is passed.
 
 PM2 apps are run with deterministic runtime names:
 
@@ -161,6 +170,8 @@ apppilot list --json
 apppilot status tiny-api --json
 apppilot env init tiny-api --dry-run --json
 apppilot deploy history tiny-api --json
+apppilot health tiny-api --dry-run --json
+apppilot backup snapshot tiny-api --dry-run --json
 ```
 
 All JSON output uses the stable envelope:

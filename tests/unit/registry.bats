@@ -179,6 +179,55 @@ teardown() {
   [[ "$output" == *'"created":true'* ]]
 }
 
+@test "health reports online runtime" {
+  fixture="$PROJECT_ROOT/tests/fixtures/pm2-app"
+  fake_bin="$APPPILOT_TEST_HOME/bin"
+  mkdir -p "$fake_bin"
+  printf '#!/usr/bin/env bash\ncase "$1" in jlist) printf "[]";; *) exit 0;; esac\n' >"$fake_bin/pm2"
+  printf '#!/usr/bin/env bash\ncat >/dev/null\nprintf "%%b\\n" "runtimeName\\tapppilot-users-api" "status\\tonline" "pmId\\t0" "pid\\t1234" "cpu\\t1%%" "memoryBytes\\t52428800" "restarts\\t0" "uptimeSeconds\\t60" "user\\tlucas" "interpreter\\tnode" "execMode\\tfork" "scriptPath\\t-"\n' >"$fake_bin/node"
+  chmod +x "$fake_bin/pm2" "$fake_bin/node"
+  PATH="$fake_bin:$PATH"
+  export PATH
+
+  run bash "$APPPILOT_BIN" init --non-interactive --quiet
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" add --name users-api --manager pm2 --path "$fixture" --entrypoint server.js --non-interactive
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" health users-api
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"AppPilot Health"* ]]
+  [[ "$output" == *"Runtime status: online"* ]]
+}
+
+@test "backup snapshot archives app without env or node_modules by default" {
+  project="$APPPILOT_TEST_HOME/backup-app"
+  mkdir -p "$project/node_modules/pkg" "$project/.git"
+  printf 'console.log("ok")\n' >"$project/server.js"
+  printf 'SECRET=value\n' >"$project/.env"
+  printf 'module\n' >"$project/node_modules/pkg/index.js"
+  printf 'git\n' >"$project/.git/config"
+
+  run bash "$APPPILOT_BIN" init --non-interactive --quiet
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" add --name backup-api --manager pm2 --path "$project" --entrypoint server.js --non-interactive
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" backup snapshot backup-api
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Backup snapshot created"* ]]
+
+  snapshot="$(find "$APPPILOT_STATE_HOME/backups/backup-api" -name '*.tar.gz' | head -n 1)"
+  [ -f "$snapshot" ]
+  listing="$(tar -tzf "$snapshot")"
+  [[ "$listing" == *"backup-app/server.js"* ]]
+  [[ "$listing" != *"backup-app/.env"* ]]
+  [[ "$listing" != *"backup-app/node_modules"* ]]
+  [[ "$listing" != *"backup-app/.git"* ]]
+
+  run bash "$APPPILOT_BIN" backup list backup-api
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"backup-api-"* ]]
+}
+
 setup_fake_deploy_tools() {
   fake_bin="$APPPILOT_TEST_HOME/bin"
   mkdir -p "$fake_bin"

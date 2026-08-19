@@ -53,6 +53,8 @@ Tip: initialization does not install PM2 or Docker. Use adapters for that.
 apppilot adapters list
 apppilot adapters install git --dry-run
 apppilot adapters install git
+apppilot adapters install nginx --dry-run
+apppilot adapters install certbot --dry-run
 apppilot adapters install pm2 --dry-run
 apppilot adapters install pm2
 ```
@@ -127,6 +129,10 @@ apppilot start tiny-api
 apppilot deploy tiny-api --dry-run
 apppilot deploy tiny-api
 apppilot status tiny-api
+apppilot health tiny-api
+apppilot health tiny-api --url http://localhost:3000
+apppilot backup snapshot tiny-api --dry-run
+apppilot backup snapshot tiny-api
 apppilot status tiny-api --full
 apppilot logs tiny-api --lines 50
 ```

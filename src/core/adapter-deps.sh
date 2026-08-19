@@ -8,6 +8,14 @@ adapter_status_git() {
   command -v git >/dev/null 2>&1 && printf 'installed' || printf 'missing'
 }
 
+adapter_status_nginx() {
+  command -v nginx >/dev/null 2>&1 && printf 'installed' || printf 'missing'
+}
+
+adapter_status_certbot() {
+  command -v certbot >/dev/null 2>&1 && printf 'installed' || printf 'missing'
+}
+
 adapter_status_compose() {
   if ! command -v docker >/dev/null 2>&1; then
     printf 'missing'
@@ -45,16 +53,20 @@ adapter_os_codename() {
 }
 
 adapters_json() {
-  local git_status pm2_status compose_status
+  local git_status nginx_status certbot_status pm2_status compose_status
   git_status="$(adapter_status_git)"
+  nginx_status="$(adapter_status_nginx)"
+  certbot_status="$(adapter_status_certbot)"
   pm2_status="$(adapter_status_pm2)"
   compose_status="$(adapter_status_compose)"
-  printf '[{"name":"git","type":"source-control","builtIn":true,"status":%s,"requiredCommands":["git"]},{"name":"pm2","type":"process-manager","builtIn":true,"status":%s,"requiredCommands":["pm2"]},{"name":"compose","type":"container-orchestrator","builtIn":true,"status":%s,"requiredCommands":["docker","docker compose"]}]' \
-    "$(json_string "$git_status")" "$(json_string "$pm2_status")" "$(json_string "$compose_status")"
+  printf '[{"name":"git","type":"source-control","builtIn":true,"status":%s,"requiredCommands":["git"]},{"name":"nginx","type":"reverse-proxy","builtIn":true,"status":%s,"requiredCommands":["nginx"]},{"name":"certbot","type":"ssl","builtIn":true,"status":%s,"requiredCommands":["certbot"]},{"name":"pm2","type":"process-manager","builtIn":true,"status":%s,"requiredCommands":["pm2"]},{"name":"compose","type":"container-orchestrator","builtIn":true,"status":%s,"requiredCommands":["docker","docker compose"]}]' \
+    "$(json_string "$git_status")" "$(json_string "$nginx_status")" "$(json_string "$certbot_status")" "$(json_string "$pm2_status")" "$(json_string "$compose_status")"
 }
 
 adapters_missing_targets() {
   [[ "$(adapter_status_git)" == "installed" ]] || printf 'git\n'
+  [[ "$(adapter_status_nginx)" == "installed" ]] || printf 'nginx\n'
+  [[ "$(adapter_status_certbot)" == "installed" ]] || printf 'certbot\n'
   [[ "$(adapter_status_pm2)" == "installed" ]] || printf 'pm2\n'
   [[ "$(adapter_status_compose)" == "installed" ]] || printf 'compose\n'
 }
@@ -65,6 +77,14 @@ adapter_install_plan() {
     git)
       command -v git >/dev/null 2>&1 || printf 'Install Git through apt\n'
       printf 'Verify git is available on PATH\n'
+      ;;
+    nginx)
+      command -v nginx >/dev/null 2>&1 || printf 'Install Nginx through apt\n'
+      printf 'Verify nginx is available on PATH\n'
+      ;;
+    certbot)
+      command -v certbot >/dev/null 2>&1 || printf 'Install Certbot and the Nginx plugin through apt\n'
+      printf 'Verify certbot is available on PATH\n'
       ;;
     pm2)
       command -v node >/dev/null 2>&1 || printf 'Install Node.js LTS from NodeSource apt repository\n'
@@ -151,6 +171,24 @@ adapter_install_git() {
   command -v git >/dev/null 2>&1 || return "$APPPILOT_ERR_MISSING_DEP"
 }
 
+adapter_install_nginx() {
+  adapter_require_supported_apt_host || return "$?"
+  if ! command -v nginx >/dev/null 2>&1; then
+    sudo apt-get update
+    sudo apt-get install -y nginx
+  fi
+  command -v nginx >/dev/null 2>&1 || return "$APPPILOT_ERR_MISSING_DEP"
+}
+
+adapter_install_certbot() {
+  adapter_require_supported_apt_host || return "$?"
+  if ! command -v certbot >/dev/null 2>&1; then
+    sudo apt-get update
+    sudo apt-get install -y certbot python3-certbot-nginx
+  fi
+  command -v certbot >/dev/null 2>&1 || return "$APPPILOT_ERR_MISSING_DEP"
+}
+
 adapter_write_docker_source() {
   local distro="$1"
   local codename="$2"
@@ -189,6 +227,8 @@ adapter_install_one() {
   local target="$1"
   case "$target" in
     git) adapter_install_git ;;
+    nginx) adapter_install_nginx ;;
+    certbot) adapter_install_certbot ;;
     pm2) adapter_install_pm2 ;;
     compose) adapter_install_compose ;;
     *) return "$APPPILOT_ERR_ARGS" ;;
@@ -215,6 +255,26 @@ adapter_git_update_status() {
   command -v git >/dev/null 2>&1 || { printf 'git not installed'; return 0; }
   command -v apt >/dev/null 2>&1 || { printf 'apt unavailable'; return 0; }
   if apt list --upgradable 2>/dev/null | grep -Eq '^git/'; then
+    printf 'update available through apt'
+  else
+    printf 'no apt update detected'
+  fi
+}
+
+adapter_nginx_update_status() {
+  command -v nginx >/dev/null 2>&1 || { printf 'nginx not installed'; return 0; }
+  command -v apt >/dev/null 2>&1 || { printf 'apt unavailable'; return 0; }
+  if apt list --upgradable 2>/dev/null | grep -Eq '^nginx'; then
+    printf 'update available through apt'
+  else
+    printf 'no apt update detected'
+  fi
+}
+
+adapter_certbot_update_status() {
+  command -v certbot >/dev/null 2>&1 || { printf 'certbot not installed'; return 0; }
+  command -v apt >/dev/null 2>&1 || { printf 'apt unavailable'; return 0; }
+  if apt list --upgradable 2>/dev/null | grep -Eq '^(certbot|python3-certbot-nginx)/'; then
     printf 'update available through apt'
   else
     printf 'no apt update detected'

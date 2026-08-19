@@ -40,6 +40,8 @@ cmd_overview() {
 
   ui_section "Adapters"
   ui_status_line "$(adapter_status_git)" "Git" "$(adapter_status_git)"
+  ui_status_line "$(adapter_status_nginx)" "Nginx" "$(adapter_status_nginx)"
+  ui_status_line "$(adapter_status_certbot)" "Certbot" "$(adapter_status_certbot)"
   ui_status_line "$(adapter_status_pm2)" "PM2" "$(adapter_status_pm2)"
   ui_status_line "$(adapter_status_compose)" "Docker Compose" "$(adapter_status_compose)"
 
