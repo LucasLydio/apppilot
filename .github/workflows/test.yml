@@ -54,6 +54,7 @@ jobs:
           bash bin/apppilot add --name smoke-api --manager pm2 --path "$PWD/tests/fixtures/pm2-app" --entrypoint server.js --no-env-from-example --non-interactive
           json_smoke "apppilot env init smoke-api --dry-run --json" bash bin/apppilot env init smoke-api --dry-run --json
           json_smoke "apppilot deploy smoke-api --dry-run --json" bash bin/apppilot deploy smoke-api --dry-run --json --allow-dirty
+          json_smoke "apppilot expose smoke-api --dry-run --json" bash bin/apppilot expose smoke-api --domain smoke.example.com --type proxy --port 3000 --dry-run --json
           json_smoke "apppilot health smoke-api --dry-run --json" bash bin/apppilot health smoke-api --dry-run --json
           json_smoke "apppilot backup snapshot smoke-api --dry-run --json" bash bin/apppilot backup snapshot smoke-api --dry-run --json
           rm -f tests/fixtures/pm2-app/.env.example

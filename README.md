@@ -482,6 +482,8 @@ apppilot clone <repo> <name> [--path <destination>] [--branch <branch>]
 apppilot add
 apppilot add --name <name> --manager <pm2|compose> --path <path> [--entrypoint <file>|--compose-file <file>] [--env-from-example]
 apppilot env init <app>
+apppilot expose <app> --domain <domain> --type static --build-dir dist [--ssl]
+apppilot expose <app> --domain <domain> --type proxy --port 3000 [--ssl]
 apppilot list
 apppilot remove <app> --yes
 

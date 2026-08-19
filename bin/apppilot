@@ -88,6 +88,8 @@ export APPPILOT_ROOT APPPILOT_JSON APPPILOT_QUIET APPPILOT_NON_INTERACTIVE APPPI
 . "$APPPILOT_ROOT/src/commands/v0.2/health.sh"
 # shellcheck source=src/commands/v0.2/backup.sh
 . "$APPPILOT_ROOT/src/commands/v0.2/backup.sh"
+# shellcheck source=src/commands/v0.2/expose.sh
+. "$APPPILOT_ROOT/src/commands/v0.2/expose.sh"
 # shellcheck source=src/commands/doctor.sh
 . "$APPPILOT_ROOT/src/commands/doctor.sh"
 # shellcheck source=src/commands/security.sh
@@ -114,6 +116,7 @@ usage() {
   printf '  %-34s %s\n' 'add --env-from-example' 'Copy .env.example to .env'
   printf '  %-34s %s\n' 'env init <app>' 'Create .env from .env.example'
   printf '  %-34s %s\n' 'clone <repo> <name>' 'Clone an app into ~/apps'
+  printf '  %-34s %s\n' 'expose <app> --domain <domain>' 'Create Nginx exposure'
   printf '  %-34s %s\n' 'list' 'List registered apps'
   printf '  %-34s %s\n' 'status <app> [--full]' 'Show app status table/details'
   printf '  %-34s %s\n' 'health <app> [--url <url>]' 'Check runtime and HTTP health'
@@ -166,6 +169,7 @@ main() {
     init) cmd_init "${args[@]}" ;;
     add) cmd_add "${args[@]}" ;;
     clone) cmd_clone "${args[@]}" ;;
+    expose) cmd_expose "${args[@]}" ;;
     env) cmd_env "${args[@]}" ;;
     remove) cmd_remove "${args[@]}" ;;
     list) cmd_list "${args[@]}" ;;

@@ -122,6 +122,31 @@ apppilot env init tiny-api --json
 
 `env init` refuses to overwrite an existing `.env`.
 
+## Expose With Nginx
+
+Static frontend:
+
+```bash
+apppilot expose web --domain example.com --type static --build-dir dist --dry-run
+apppilot expose web --domain example.com --type static --build-dir dist --yes
+```
+
+Backend service:
+
+```bash
+apppilot expose api --domain api.example.com --type proxy --port 3000 --dry-run
+apppilot expose api --domain api.example.com --type proxy --port 3000 --yes
+```
+
+With Certbot:
+
+```bash
+apppilot expose web --domain example.com --type static --build-dir dist --ssl --email ops@example.com --dry-run
+apppilot expose web --domain example.com --type static --build-dir dist --ssl --email ops@example.com --yes
+```
+
+`expose` writes an Nginx site config, enables it, tests Nginx, and reloads Nginx. It does not edit DNS. `--ssl` runs Certbot after Nginx is configured.
+
 ## Operations
 
 ```bash
@@ -138,6 +163,7 @@ apppilot deploy history tiny-api
 apppilot deploy rollback tiny-api --dry-run
 apppilot deploy rollback tiny-api
 apppilot deploy rollback tiny-api --to <commit-sha>
+apppilot expose tiny-api --domain api.example.com --type proxy --port 3000 --dry-run
 apppilot health tiny-api
 apppilot health tiny-api --url http://localhost:3000
 apppilot backup snapshot tiny-api

@@ -129,6 +129,7 @@ apppilot start tiny-api
 apppilot deploy tiny-api --dry-run
 apppilot deploy tiny-api
 apppilot status tiny-api
+apppilot expose tiny-api --domain api.example.com --type proxy --port 3000 --dry-run
 apppilot health tiny-api
 apppilot health tiny-api --url http://localhost:3000
 apppilot backup snapshot tiny-api --dry-run

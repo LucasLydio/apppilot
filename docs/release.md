@@ -48,6 +48,8 @@ bats tests/unit/cli.bats tests/unit/registry.bats
 - [ ] `apppilot deploy history <app>` shows the latest deploy records
 - [ ] `apppilot deploy rollback <app> --dry-run` shows the target revision
 - [ ] `apppilot deploy rollback <app>` resets Git and restarts the app
+- [ ] `apppilot expose <app> --domain <domain> --type static --build-dir dist --dry-run` shows Nginx config
+- [ ] `apppilot expose <app> --domain <domain> --type proxy --port 3000 --dry-run` shows Nginx proxy config
 - [ ] `apppilot health <app>` checks runtime status
 - [ ] `apppilot health <app> --url <url>` checks HTTP response
 - [ ] `apppilot backup snapshot <app> --dry-run` shows backup exclusions
