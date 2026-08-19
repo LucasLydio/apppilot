@@ -2,7 +2,7 @@
 
 set -Eeuo pipefail
 
-APPPILOT_VERSION="0.1.0"
+APPPILOT_VERSION="0.2.0-dev"
 APPPILOT_JSON=0
 APPPILOT_QUIET=0
 APPPILOT_NON_INTERACTIVE=0
@@ -80,6 +80,10 @@ export APPPILOT_ROOT APPPILOT_JSON APPPILOT_QUIET APPPILOT_NON_INTERACTIVE APPPI
 . "$APPPILOT_ROOT/src/commands/_operations.sh"
 # shellcheck source=src/commands/deploy.sh
 . "$APPPILOT_ROOT/src/commands/deploy.sh"
+# shellcheck source=src/commands/v0.2/deploy-history.sh
+. "$APPPILOT_ROOT/src/commands/v0.2/deploy-history.sh"
+# shellcheck source=src/commands/v0.2/clone.sh
+. "$APPPILOT_ROOT/src/commands/v0.2/clone.sh"
 # shellcheck source=src/commands/doctor.sh
 . "$APPPILOT_ROOT/src/commands/doctor.sh"
 # shellcheck source=src/commands/security.sh
@@ -105,6 +109,7 @@ usage() {
   printf '  %-34s %s\n' 'add [--name <app> ...]' 'Register PM2 or Compose app'
   printf '  %-34s %s\n' 'add --env-from-example' 'Copy .env.example to .env'
   printf '  %-34s %s\n' 'env init <app>' 'Create .env from .env.example'
+  printf '  %-34s %s\n' 'clone <repo> <name>' 'Clone an app into ~/apps'
   printf '  %-34s %s\n' 'list' 'List registered apps'
   printf '  %-34s %s\n' 'status <app> [--full]' 'Show app status table/details'
   printf '  %-34s %s\n' 'logs <app>' 'Show app logs'
@@ -114,8 +119,8 @@ usage() {
   printf '  %-34s %s\n' 'deploy rollback <app>' 'Rollback to a previous revision'
   printf '  %-34s %s\n' 'remove <app> --yes' 'Remove app from registry'
   ui_section "Adapters"
-  printf '  %-34s %s\n' 'adapters list' 'Show PM2/Compose availability'
-  printf '  %-34s %s\n' 'adapters install [pm2|compose|all]' 'Install adapter dependencies'
+  printf '  %-34s %s\n' 'adapters list' 'Show Git/PM2/Compose availability'
+  printf '  %-34s %s\n' 'adapters install [git|pm2|compose|all]' 'Install adapter dependencies'
   printf '  %-34s %s\n' 'adapters updates' 'Check adapter update status'
   ui_section "Global Flags"
   printf '  %-18s %s\n' '--json' 'Print JSON only'
@@ -153,6 +158,7 @@ main() {
     --version) printf '%s\n' "$APPPILOT_VERSION" ;;
     init) cmd_init "${args[@]}" ;;
     add) cmd_add "${args[@]}" ;;
+    clone) cmd_clone "${args[@]}" ;;
     env) cmd_env "${args[@]}" ;;
     remove) cmd_remove "${args[@]}" ;;
     list) cmd_list "${args[@]}" ;;

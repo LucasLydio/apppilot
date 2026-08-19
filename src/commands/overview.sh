@@ -39,6 +39,7 @@ cmd_overview() {
   ui_kv "Applications" "$(overview_app_count) registered"
 
   ui_section "Adapters"
+  ui_status_line "$(adapter_status_git)" "Git" "$(adapter_status_git)"
   ui_status_line "$(adapter_status_pm2)" "PM2" "$(adapter_status_pm2)"
   ui_status_line "$(adapter_status_compose)" "Docker Compose" "$(adapter_status_compose)"
 
@@ -46,4 +47,5 @@ cmd_overview() {
   printf '  apppilot doctor\n'
   printf '  apppilot validate\n'
   printf '  apppilot security audit\n'
+  printf '  apppilot clone <repo> <name> --dry-run\n'
 }

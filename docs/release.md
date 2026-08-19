@@ -24,13 +24,15 @@ bats tests/unit/cli.bats tests/unit/registry.bats
 - [ ] `apppilot init` renders the welcome UI
 - [ ] `apppilot doctor` runs without crashing
 - [ ] `apppilot security audit` is read-only
-- [ ] `apppilot adapters list` shows PM2 and Compose
+- [ ] `apppilot adapters list` shows Git, PM2, and Compose
+- [ ] `apppilot adapters install git --dry-run` is clear
 - [ ] `apppilot adapters install pm2 --dry-run` is clear
 - [ ] `apppilot adapters install compose --dry-run` is clear
 
 ## Real App Checks
 
 - [ ] Real app cloned outside AppPilot, for example `~/apps/tiny-api`
+- [ ] `apppilot clone <repo> <name> --dry-run` shows the destination and next step
 - [ ] Guided `apppilot add` shows tips and defaults
 - [ ] Guided `apppilot add` can redo answers with `r`
 - [ ] `.env.example` prompt can create `.env`

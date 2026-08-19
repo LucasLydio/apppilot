@@ -4,6 +4,10 @@ adapter_status_pm2() {
   command -v pm2 >/dev/null 2>&1 && printf 'installed' || printf 'missing'
 }
 
+adapter_status_git() {
+  command -v git >/dev/null 2>&1 && printf 'installed' || printf 'missing'
+}
+
 adapter_status_compose() {
   if ! command -v docker >/dev/null 2>&1; then
     printf 'missing'
@@ -41,14 +45,16 @@ adapter_os_codename() {
 }
 
 adapters_json() {
-  local pm2_status compose_status
+  local git_status pm2_status compose_status
+  git_status="$(adapter_status_git)"
   pm2_status="$(adapter_status_pm2)"
   compose_status="$(adapter_status_compose)"
-  printf '[{"name":"pm2","type":"process-manager","builtIn":true,"status":%s,"requiredCommands":["pm2"]},{"name":"compose","type":"container-orchestrator","builtIn":true,"status":%s,"requiredCommands":["docker","docker compose"]}]' \
-    "$(json_string "$pm2_status")" "$(json_string "$compose_status")"
+  printf '[{"name":"git","type":"source-control","builtIn":true,"status":%s,"requiredCommands":["git"]},{"name":"pm2","type":"process-manager","builtIn":true,"status":%s,"requiredCommands":["pm2"]},{"name":"compose","type":"container-orchestrator","builtIn":true,"status":%s,"requiredCommands":["docker","docker compose"]}]' \
+    "$(json_string "$git_status")" "$(json_string "$pm2_status")" "$(json_string "$compose_status")"
 }
 
 adapters_missing_targets() {
+  [[ "$(adapter_status_git)" == "installed" ]] || printf 'git\n'
   [[ "$(adapter_status_pm2)" == "installed" ]] || printf 'pm2\n'
   [[ "$(adapter_status_compose)" == "installed" ]] || printf 'compose\n'
 }
@@ -56,6 +62,10 @@ adapters_missing_targets() {
 adapter_install_plan() {
   local target="$1"
   case "$target" in
+    git)
+      command -v git >/dev/null 2>&1 || printf 'Install Git through apt\n'
+      printf 'Verify git is available on PATH\n'
+      ;;
     pm2)
       command -v node >/dev/null 2>&1 || printf 'Install Node.js LTS from NodeSource apt repository\n'
       command -v npm >/dev/null 2>&1 || printf 'Install npm through Node.js LTS package\n'
@@ -132,6 +142,15 @@ adapter_install_pm2() {
   command -v pm2 >/dev/null 2>&1 || return "$APPPILOT_ERR_MISSING_DEP"
 }
 
+adapter_install_git() {
+  adapter_require_supported_apt_host || return "$?"
+  if ! command -v git >/dev/null 2>&1; then
+    sudo apt-get update
+    sudo apt-get install -y git
+  fi
+  command -v git >/dev/null 2>&1 || return "$APPPILOT_ERR_MISSING_DEP"
+}
+
 adapter_write_docker_source() {
   local distro="$1"
   local codename="$2"
@@ -169,6 +188,7 @@ adapter_install_compose() {
 adapter_install_one() {
   local target="$1"
   case "$target" in
+    git) adapter_install_git ;;
     pm2) adapter_install_pm2 ;;
     compose) adapter_install_compose ;;
     *) return "$APPPILOT_ERR_ARGS" ;;
@@ -189,6 +209,16 @@ adapters_install_json_plan() {
     done < <(adapter_install_plan "$target")
   done
   printf ']'
+}
+
+adapter_git_update_status() {
+  command -v git >/dev/null 2>&1 || { printf 'git not installed'; return 0; }
+  command -v apt >/dev/null 2>&1 || { printf 'apt unavailable'; return 0; }
+  if apt list --upgradable 2>/dev/null | grep -Eq '^git/'; then
+    printf 'update available through apt'
+  else
+    printf 'no apt update detected'
+  fi
 }
 
 adapter_pm2_update_status() {

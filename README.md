@@ -13,7 +13,7 @@ apppilot start tiny-api
 apppilot status tiny-api
 ```
 
-AppPilot does not replace PM2, Docker, Git, or your application framework. It helps you prepare the VM, register apps that already exist on the server, and run common operations with safer defaults.
+AppPilot does not replace PM2, Docker, Git, or your application framework. It helps you prepare the VM, clone or register apps on the server, and run common operations with safer defaults.
 
 ## What v0.1 Does
 
@@ -38,6 +38,16 @@ Not included in v0.1:
 - Backups, rollbacks, dashboards, Kubernetes, or third-party plugins
 
 Those are good candidates for later versions.
+
+## What v0.2 Starts
+
+v0.2 begins with the first project bootstrap command:
+
+```bash
+apppilot clone <repo> <name>
+```
+
+It clones into `~/apps/<name>` by default, then points the user to `apppilot add` so manager, entrypoint, Compose file, and environment are still reviewed before AppPilot controls the app.
 
 ## Recommended VM Layout
 
@@ -149,6 +159,7 @@ AppPilot Adapters
 
   Name           Type                     Status       Required commands
   -------------- ------------------------ ------------ ----------------
+  git            source-control           installed    git
   pm2            process-manager          missing      pm2
   compose        container-orchestrator   partial      docker, docker compose
 ```
@@ -162,6 +173,7 @@ apppilot adapters install --dry-run
 Install what you need:
 
 ```bash
+apppilot adapters install git
 apppilot adapters install pm2
 apppilot adapters install compose
 ```
@@ -177,6 +189,13 @@ mkdir -p ~/apps
 cd ~/apps
 git clone <your-app-github-url> tiny-api
 cd tiny-api
+```
+
+Or let AppPilot clone it into the recommended location:
+
+```bash
+apppilot clone <your-app-github-url> tiny-api
+cd ~/apps/tiny-api
 ```
 
 Prepare the app like you normally would:
@@ -452,9 +471,10 @@ apppilot security audit
 apppilot validate
 
 apppilot adapters list
-apppilot adapters install [pm2|compose|all] [--yes]
+apppilot adapters install [git|pm2|compose|all] [--yes]
 apppilot adapters updates
 
+apppilot clone <repo> <name> [--path <destination>] [--branch <branch>]
 apppilot add
 apppilot add --name <name> --manager <pm2|compose> --path <path> [--entrypoint <file>|--compose-file <file>] [--env-from-example]
 apppilot env init <app>

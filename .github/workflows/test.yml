@@ -14,7 +14,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y shellcheck bats jq
       - name: ShellCheck
-        run: shellcheck bin/apppilot src/**/*.sh install.sh uninstall.sh tests/test_helper.bash
+        run: |
+          find bin src -name '*.sh' -print0 | xargs -0 shellcheck
+          shellcheck install.sh uninstall.sh tests/test_helper.bash
       - name: Bats unit tests
         run: bats tests/unit/cli.bats tests/unit/registry.bats
       - name: CLI smoke tests
@@ -44,6 +46,7 @@ jobs:
           json_smoke "apppilot doctor --json" bash bin/apppilot doctor --json
           json_smoke "apppilot security audit --json" bash bin/apppilot security audit --json
           json_smoke "apppilot adapters list --json" bash bin/apppilot adapters list --json
+          json_smoke "apppilot clone --dry-run --json" bash bin/apppilot clone https://github.com/example/smoke-api.git smoke-api --dry-run --json
           json_smoke "apppilot adapters install pm2 --dry-run --json" bash bin/apppilot adapters install pm2 --dry-run --json
           printf 'PORT=3000\n' > tests/fixtures/pm2-app/.env.example
           bash bin/apppilot add --name smoke-api --manager pm2 --path "$PWD/tests/fixtures/pm2-app" --entrypoint server.js --no-env-from-example --non-interactive

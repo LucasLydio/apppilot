@@ -43,6 +43,7 @@ apppilot start ecommerce
 
 - `bin/apppilot` parses global flags and routes commands.
 - `src/commands` contains public command handlers.
+- `src/commands/v0.2` contains new v0.2 command modules while they are small and isolated.
 - `src/core` owns config paths, registry files, env file helpers, locks, exit codes, and output envelopes.
 - `src/adapters` contains PM2 and Docker Compose behavior.
 - `src/host` performs Linux host, resource, package, and port inspection.

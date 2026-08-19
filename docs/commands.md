@@ -41,13 +41,30 @@ apppilot security audit
 ```bash
 apppilot adapters list
 apppilot adapters install --dry-run
+apppilot adapters install git
 apppilot adapters install pm2
 apppilot adapters install compose
 apppilot adapters install all --yes --non-interactive
 apppilot adapters updates
 ```
 
-Tip: use PM2 for Node apps with an entrypoint such as `server.js` or `dist/main.js`. Use Compose for projects with `compose.yaml` or `docker-compose.yml`.
+Tip: Git is required for clone and deploy. Use PM2 for Node apps with an entrypoint such as `server.js` or `dist/main.js`. Use Compose for projects with `compose.yaml` or `docker-compose.yml`.
+
+## Clone
+
+```bash
+apppilot clone https://github.com/example/tiny-api.git tiny-api
+apppilot clone https://github.com/example/tiny-api.git tiny-api --branch main
+apppilot clone https://github.com/example/tiny-api.git tiny-api --path /srv/tiny-api
+apppilot clone https://github.com/example/tiny-api.git tiny-api --dry-run
+```
+
+`clone` creates the project folder, but it does not register the app. After cloning, run:
+
+```bash
+cd ~/apps/tiny-api
+apppilot add
+```
 
 ## Application Registry
 

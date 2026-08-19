@@ -51,6 +51,8 @@ Tip: initialization does not install PM2 or Docker. Use adapters for that.
 
 ```bash
 apppilot adapters list
+apppilot adapters install git --dry-run
+apppilot adapters install git
 apppilot adapters install pm2 --dry-run
 apppilot adapters install pm2
 ```
@@ -71,6 +73,13 @@ mkdir -p ~/apps
 cd ~/apps
 git clone <your-app-github-url> tiny-api
 cd tiny-api
+```
+
+Or use AppPilot's v0.2 clone flow:
+
+```bash
+apppilot clone <your-app-github-url> tiny-api
+cd ~/apps/tiny-api
 ```
 
 Prepare it normally:
