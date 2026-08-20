@@ -50,6 +50,7 @@ bats tests/unit/cli.bats tests/unit/registry.bats
 - [ ] `apppilot deploy rollback <app> --dry-run` shows the target revision
 - [ ] `apppilot deploy rollback <app>` resets Git and restarts the app
 - [ ] `apppilot expose <static-app> --domain <domain> --dry-run` shows Nginx static config
+- [ ] `apppilot expose <static-app> --domain <domain> --listen-port 8080 --dry-run` shows Nginx on a custom port
 - [ ] `apppilot expose <app> --domain <domain> --type proxy --port 3000 --dry-run` shows Nginx proxy config
 - [ ] `apppilot health <app>` checks runtime status
 - [ ] `apppilot health <app> --url <url>` checks HTTP response

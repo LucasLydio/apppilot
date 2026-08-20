@@ -120,6 +120,7 @@ usage() {
   printf '  %-34s %s\n' 'env init <app>' 'Create .env from .env.example'
   printf '  %-34s %s\n' 'clone <repo> <name>' 'Clone an app into ~/apps'
   printf '  %-34s %s\n' 'expose <app> --domain <domain>' 'Create Nginx exposure'
+  printf '  %-34s %s\n' 'expose --listen-port <port>' 'Use a non-default Nginx port'
   printf '  %-34s %s\n' 'list' 'List registered apps'
   printf '  %-34s %s\n' 'status <app> [--full]' 'Show app status table/details'
   printf '  %-34s %s\n' 'health <app> [--url <url>]' 'Check runtime and HTTP health'

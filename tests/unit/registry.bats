@@ -238,10 +238,12 @@ teardown() {
   run bash "$APPPILOT_BIN" add-static --name web --path "$project" --build-dir dist --non-interactive
   [ "$status" -eq 0 ]
   [[ "$output" == *"Registered web (static)"* ]]
-  run bash "$APPPILOT_BIN" expose web --domain example.com --dry-run
+  run bash "$APPPILOT_BIN" expose web --domain example.com --listen-port 8080 --dry-run
   [ "$status" -eq 0 ]
   [[ "$output" == *"Would expose: web"* ]]
   [[ "$output" == *"Type: static"* ]]
+  [[ "$output" == *"Listen port: 8080"* ]]
+  [[ "$output" == *"listen 8080"* ]]
   [[ "$output" == *"server_name example.com"* ]]
   [[ "$output" == *"root $project/dist"* ]]
   [[ "$output" == *"try_files"* ]]
@@ -275,11 +277,12 @@ teardown() {
   [ "$status" -eq 0 ]
   run bash "$APPPILOT_BIN" add --name api --manager pm2 --path "$project" --entrypoint server.js --non-interactive
   [ "$status" -eq 0 ]
-  run bash "$APPPILOT_BIN" expose api --domain api.example.com --type proxy --port 3000 --dry-run --json
+  run bash "$APPPILOT_BIN" expose api --domain api.example.com --type proxy --port 3000 --listen-port 8080 --dry-run --json
   [ "$status" -eq 0 ]
   [[ "$output" == *'"domain":"api.example.com"'* ]]
   [[ "$output" == *'"type":"proxy"'* ]]
   [[ "$output" == *'"port":"3000"'* ]]
+  [[ "$output" == *'"listenPort":"8080"'* ]]
   [[ "$output" == *'"dryRun":true'* ]]
 }
 

@@ -50,7 +50,7 @@ apppilot adapters install all --yes --non-interactive
 apppilot adapters updates
 ```
 
-Tip: Git is required for clone and deploy. Nginx and Certbot are installable adapters, but AppPilot does not write proxy or SSL config automatically yet. Use PM2 for Node apps with an entrypoint such as `server.js` or `dist/main.js`. Use Compose for projects with `compose.yaml` or `docker-compose.yml`.
+Tip: Git is required for clone and deploy. Nginx is required for `expose`, and Certbot is required only when using `expose --ssl`. Use PM2 for Node apps with an entrypoint such as `server.js` or `dist/main.js`. Use Compose for projects with `compose.yaml` or `docker-compose.yml`.
 
 ## Clone
 
@@ -137,6 +137,7 @@ Static frontend:
 ```bash
 apppilot expose web --domain example.com --dry-run
 apppilot expose web --domain example.com --yes
+apppilot expose web --domain example.com --listen-port 8080 --dry-run
 ```
 
 Backend service:
@@ -153,7 +154,23 @@ apppilot expose web --domain example.com --ssl --email ops@example.com --dry-run
 apppilot expose web --domain example.com --ssl --email ops@example.com --yes
 ```
 
-`expose` writes an Nginx site config, enables it, tests Nginx, and reloads Nginx. It does not edit DNS. `--ssl` runs Certbot after Nginx is configured.
+`expose` writes an Nginx site config, enables it, tests Nginx, and reloads or starts Nginx. It does not edit DNS. `--ssl` runs Certbot after Nginx is configured.
+
+`--listen-port` changes the public port Nginx listens on. Use it when another service, such as Docker, must keep port `80`:
+
+```bash
+apppilot expose web --domain example.com --listen-port 8080 --yes
+```
+
+Then access the site with the port in the URL:
+
+```text
+http://example.com:8080
+```
+
+Tip: all enabled Nginx sites must avoid port `80` while another process owns it. If Ubuntu's default Nginx site is enabled, disable that site or it can still prevent Nginx from starting.
+
+Tip: if Nginx says the configuration is valid but reload fails because `/run/nginx.pid` is empty, Nginx was not running cleanly. AppPilot will try to restart or start Nginx after a successful config test.
 
 ## Operations
 

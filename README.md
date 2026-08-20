@@ -397,6 +397,25 @@ apppilot expose my-product-web \
 
 Tip: `add-static` registers the frontend path and build folder only. It does not start a process because Nginx serves the built files directly.
 
+If another service must keep port `80`, expose Nginx on a different port:
+
+```bash
+apppilot expose my-product-web \
+  --domain example.com \
+  --listen-port 8080 \
+  --yes
+```
+
+Then open:
+
+```text
+http://example.com:8080
+```
+
+Tip: this is useful for internal testing or constrained servers. For normal production URLs and Certbot HTTP validation, Nginx should own ports `80` and `443`.
+
+Tip: if Nginx reports that the config test is successful but reload fails with an empty `/run/nginx.pid`, Nginx was not running cleanly. AppPilot tests the config first, then tries to reload, restart, or start Nginx.
+
 ### DNS And SSL
 
 Before running Certbot, point DNS to the VM public IP:

@@ -59,10 +59,11 @@ expose_render_config() {
   local type="$2"
   local build_dir="$3"
   local port="$4"
+  local listen_port="$5"
 
   printf 'server {\n'
-  printf '    listen 80;\n'
-  printf '    listen [::]:80;\n'
+  printf '    listen %s;\n' "$listen_port"
+  printf '    listen [::]:%s;\n' "$listen_port"
   printf '    server_name %s;\n\n' "$domain"
   if [[ "$type" == "static" ]]; then
     printf '    root %s/%s;\n' "$APP_PATH" "$build_dir"
@@ -109,33 +110,67 @@ expose_enable_site() {
   fi
 }
 
-expose_nginx_check_reload() {
+expose_privileged() {
   if [[ "$(id -u)" -eq 0 ]]; then
-    nginx -t && nginx -s reload
+    "$@"
   elif command -v sudo >/dev/null 2>&1; then
-    sudo nginx -t && sudo nginx -s reload
+    sudo "$@"
   else
-    nginx -t && nginx -s reload
+    "$@"
   fi
+}
+
+expose_nginx_pid_present() {
+  local pid_file="/run/nginx.pid"
+  local pid=""
+  [[ -s "$pid_file" ]] || return 1
+  pid="$(tr -d '[:space:]' < "$pid_file" 2>/dev/null || true)"
+  [[ "$pid" =~ ^[0-9]+$ ]]
+}
+
+expose_nginx_check_reload() {
+  expose_privileged nginx -t || return "$?"
+
+  if command -v systemctl >/dev/null 2>&1 && [[ -d /run/systemd/system ]]; then
+    expose_privileged systemctl reload nginx && return 0
+    expose_privileged systemctl restart nginx && return 0
+  fi
+
+  if command -v service >/dev/null 2>&1; then
+    expose_privileged service nginx reload && return 0
+    expose_privileged service nginx restart && return 0
+  fi
+
+  if expose_nginx_pid_present; then
+    expose_privileged nginx -s reload && return 0
+  fi
+
+  expose_privileged nginx
+}
+
+expose_nginx_failure_hint() {
+  [[ "${APPPILOT_JSON:-0}" == "1" || "${APPPILOT_QUIET:-0}" == "1" ]] && return 0
+  log_warn "Nginx config is valid, but Nginx could not reload or start."
+  log_info "Check the service log:"
+  log_info "  sudo journalctl -u nginx.service -n 50 --no-pager"
+  log_info "Check whether another process is using ports 80 or 443:"
+  log_info "  sudo ss -ltnp | grep -E ':80|:443'"
 }
 
 expose_run_certbot() {
   local domain="$1"
   local email="$2"
-  local -a command_prefix=()
-  if [[ "$(id -u)" -ne 0 ]] && command -v sudo >/dev/null 2>&1; then
-    command_prefix=(sudo)
-  fi
   if [[ -n "$email" ]]; then
-    "${command_prefix[@]}" certbot --nginx -d "$domain" --email "$email" --agree-tos --non-interactive
+    expose_privileged certbot --nginx -d "$domain" --email "$email" --agree-tos --non-interactive
   else
-    "${command_prefix[@]}" certbot --nginx -d "$domain" --register-unsafely-without-email --agree-tos --non-interactive
+    expose_privileged certbot --nginx -d "$domain" --register-unsafely-without-email --agree-tos --non-interactive
   fi
 }
 
 cmd_expose() {
-  local app="" domain="" type="" build_dir="" port="" ssl=0 email="" yes=0
+  local app="" domain="" type="" build_dir="" port="" listen_port="80" ssl=0 email="" yes=0
   local config_path="" enabled_path="" tmp_config=""
+  local nginx_status=0
   local -a actions=()
 
   while [[ "$#" -gt 0 ]]; do
@@ -160,6 +195,11 @@ cmd_expose() {
         port="$2"
         shift 2
         ;;
+      --listen-port)
+        [[ -n "${2:-}" ]] || { output_error "--listen-port requires a port" "$APPPILOT_ERR_ARGS"; return "$APPPILOT_ERR_ARGS"; }
+        listen_port="$2"
+        shift 2
+        ;;
       --ssl) ssl=1; shift ;;
       --email)
         [[ -n "${2:-}" ]] || { output_error "--email requires an email address" "$APPPILOT_ERR_ARGS"; return "$APPPILOT_ERR_ARGS"; }
@@ -178,6 +218,8 @@ cmd_expose() {
   [[ -n "$app" ]] || { output_error "expose requires an application name" "$APPPILOT_ERR_ARGS"; return "$APPPILOT_ERR_ARGS"; }
   [[ -n "$domain" ]] || { output_error "expose requires --domain" "$APPPILOT_ERR_ARGS"; return "$APPPILOT_ERR_ARGS"; }
   expose_validate_domain "$domain" || { output_error "Invalid domain: $domain" "$APPPILOT_ERR_ARGS"; return "$APPPILOT_ERR_ARGS"; }
+  [[ "$listen_port" =~ ^[0-9]+$ && "$listen_port" -gt 0 && "$listen_port" -le 65535 ]] || { output_error "--listen-port must be 1-65535" "$APPPILOT_ERR_ARGS"; return "$APPPILOT_ERR_ARGS"; }
+  [[ "$ssl" != "1" || "$listen_port" == "80" ]] || { output_error "expose --ssl requires --listen-port 80 for Certbot HTTP validation" "$APPPILOT_ERR_ARGS"; return "$APPPILOT_ERR_ARGS"; }
 
   registry_load "$app" || {
     local code="$?"
@@ -200,17 +242,18 @@ cmd_expose() {
   enabled_path="$(expose_enabled_path "$domain")"
   actions+=("write Nginx config $config_path")
   actions+=("enable site $enabled_path")
-  actions+=("test and reload Nginx")
+  actions+=("test and reload or start Nginx")
   [[ "$ssl" == "1" ]] && actions+=("issue SSL certificate with Certbot for $domain")
 
   if [[ "${APPPILOT_DRY_RUN:-0}" == "1" ]]; then
     if [[ "${APPPILOT_JSON:-0}" == "1" ]]; then
-      output_success_json "{\"app\":$(json_string "$APP_NAME"),\"domain\":$(json_string "$domain"),\"type\":$(json_string "$type"),\"buildDir\":$(json_string "$build_dir"),\"port\":$(json_string "$port"),\"ssl\":$(json_bool "$ssl"),\"configPath\":$(json_string "$config_path"),\"actions\":$(expose_json_actions "${actions[@]}")}" "[]" "true"
+      output_success_json "{\"app\":$(json_string "$APP_NAME"),\"domain\":$(json_string "$domain"),\"type\":$(json_string "$type"),\"buildDir\":$(json_string "$build_dir"),\"port\":$(json_string "$port"),\"listenPort\":$(json_string "$listen_port"),\"ssl\":$(json_bool "$ssl"),\"configPath\":$(json_string "$config_path"),\"actions\":$(expose_json_actions "${actions[@]}")}" "[]" "true"
     else
       output_dry_run_header
       log_info "Would expose: $APP_NAME"
       log_info "Domain: $domain"
       log_info "Type: $type"
+      log_info "Listen port: $listen_port"
       [[ "$type" == "static" ]] && log_info "Build directory: $build_dir"
       [[ "$type" == "proxy" ]] && log_info "Target: http://127.0.0.1:$port"
       local action
@@ -218,7 +261,7 @@ cmd_expose() {
         log_info "- $action"
       done
       printf '\n'
-      expose_render_config "$domain" "$type" "$build_dir" "$port"
+      expose_render_config "$domain" "$type" "$build_dir" "$port" "$listen_port"
       printf '\nNo changes were made.\n'
     fi
     return "$APPPILOT_OK"
@@ -235,18 +278,25 @@ cmd_expose() {
 
   lock_acquire "expose" "$APP_NAME" || return "$?"
   tmp_config="$(mktemp)"
-  expose_render_config "$domain" "$type" "$build_dir" "$port" >"$tmp_config"
+  expose_render_config "$domain" "$type" "$build_dir" "$port" "$listen_port" >"$tmp_config"
   expose_install_file "$tmp_config" "$config_path"
   rm -f "$tmp_config"
   expose_enable_site "$config_path" "$enabled_path"
-  expose_nginx_check_reload || return "$?"
+  expose_nginx_check_reload
+  nginx_status="$?"
+  if [[ "$nginx_status" -ne 0 ]]; then
+    expose_nginx_failure_hint
+    output_error "Nginx could not reload or start after writing the site config" "$APPPILOT_ERR_CONFIG"
+    return "$APPPILOT_ERR_CONFIG"
+  fi
   [[ "$ssl" == "1" ]] && expose_run_certbot "$domain" "$email"
 
   if [[ "${APPPILOT_JSON:-0}" == "1" ]]; then
-    output_success_json "{\"app\":$(json_string "$APP_NAME"),\"domain\":$(json_string "$domain"),\"type\":$(json_string "$type"),\"configPath\":$(json_string "$config_path"),\"exposed\":true}"
+    output_success_json "{\"app\":$(json_string "$APP_NAME"),\"domain\":$(json_string "$domain"),\"type\":$(json_string "$type"),\"listenPort\":$(json_string "$listen_port"),\"configPath\":$(json_string "$config_path"),\"exposed\":true}"
   else
     log_check "Nginx exposure configured"
     log_info "Domain: $domain"
+    log_info "Listen port: $listen_port"
     log_info "Config: $config_path"
   fi
 }
