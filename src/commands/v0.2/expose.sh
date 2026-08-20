@@ -64,17 +64,17 @@ expose_render_config() {
     printf '    root %s/%s;\n' "$APP_PATH" "$build_dir"
     printf '    index index.html;\n\n'
     printf '    location / {\n'
-    printf '        try_files $uri $uri/ /index.html;\n'
+    printf "        try_files \$uri \$uri/ /index.html;\n"
     printf '    }\n'
   else
     printf '    location / {\n'
     printf '        proxy_pass http://127.0.0.1:%s;\n' "$port"
     printf '        proxy_http_version 1.1;\n'
-    printf '        proxy_set_header Host $host;\n'
-    printf '        proxy_set_header X-Real-IP $remote_addr;\n'
-    printf '        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n'
-    printf '        proxy_set_header X-Forwarded-Proto $scheme;\n'
-    printf '        proxy_set_header Upgrade $http_upgrade;\n'
+    printf "        proxy_set_header Host \$host;\n"
+    printf "        proxy_set_header X-Real-IP \$remote_addr;\n"
+    printf "        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;\n"
+    printf "        proxy_set_header X-Forwarded-Proto \$scheme;\n"
+    printf "        proxy_set_header Upgrade \$http_upgrade;\n"
     printf '        proxy_set_header Connection "upgrade";\n'
     printf '    }\n'
   fi
