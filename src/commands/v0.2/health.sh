@@ -86,15 +86,19 @@ cmd_health() {
     return "$APPPILOT_OK"
   fi
 
-  runtime_status="$(health_runtime_status)" || {
-    local code="$?"
-    output_error "Could not read runtime status for '$APP_NAME'" "$code"
-    return "$code"
-  }
+  if [[ "$APP_MANAGER" == "static" ]]; then
+    runtime_status="static"
+  else
+    runtime_status="$(health_runtime_status)" || {
+      local code="$?"
+      output_error "Could not read runtime status for '$APP_NAME'" "$code"
+      return "$code"
+    }
 
-  if [[ "$runtime_status" != "online" ]]; then
-    output_error "Health check failed: runtime status is $runtime_status" "$APPPILOT_ERR_HEALTH"
-    return "$APPPILOT_ERR_HEALTH"
+    if [[ "$runtime_status" != "online" ]]; then
+      output_error "Health check failed: runtime status is $runtime_status" "$APPPILOT_ERR_HEALTH"
+      return "$APPPILOT_ERR_HEALTH"
+    fi
   fi
 
   if [[ -n "$url" ]]; then

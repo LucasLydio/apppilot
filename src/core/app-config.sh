@@ -11,6 +11,7 @@ app_config_reset() {
   APP_PATH=""
   APP_ENTRYPOINT=""
   APP_COMPOSE_FILE=""
+  APP_BUILD_DIR=""
   APP_ENVIRONMENT=""
 }
 
@@ -38,6 +39,7 @@ app_config_load_file() {
       path) APP_PATH="$value" ;;
       entrypoint) APP_ENTRYPOINT="$value" ;;
       compose_file) APP_COMPOSE_FILE="$value" ;;
+      build_dir) APP_BUILD_DIR="$value" ;;
       environment) APP_ENVIRONMENT="$value" ;;
     esac
   done <"$file"
@@ -46,22 +48,26 @@ app_config_load_file() {
 app_config_validate_loaded() {
   validator_required "$APP_NAME" || return "$APPPILOT_ERR_CONFIG"
   validator_name "$APP_NAME" || return "$APPPILOT_ERR_CONFIG"
-  validator_manager "$APP_MANAGER" || return "$APPPILOT_ERR_CONFIG"
+  validator_registry_manager "$APP_MANAGER" || return "$APPPILOT_ERR_CONFIG"
   validator_path_safe "$APP_PATH" || return "$APPPILOT_ERR_CONFIG"
   [[ -d "$APP_PATH" ]] || return "$APPPILOT_ERR_CONFIG"
   if [[ "$APP_MANAGER" == "pm2" ]]; then
     validator_required "$APP_ENTRYPOINT" || return "$APPPILOT_ERR_CONFIG"
     validator_relative_path_safe "$APP_ENTRYPOINT" || return "$APPPILOT_ERR_CONFIG"
     [[ -f "$APP_PATH/$APP_ENTRYPOINT" ]] || return "$APPPILOT_ERR_CONFIG"
-  else
+  elif [[ "$APP_MANAGER" == "compose" ]]; then
     validator_required "$APP_COMPOSE_FILE" || return "$APPPILOT_ERR_CONFIG"
     validator_relative_path_safe "$APP_COMPOSE_FILE" || return "$APPPILOT_ERR_CONFIG"
     [[ -f "$APP_PATH/$APP_COMPOSE_FILE" ]] || return "$APPPILOT_ERR_CONFIG"
+  else
+    validator_required "$APP_BUILD_DIR" || return "$APPPILOT_ERR_CONFIG"
+    validator_relative_path_safe "$APP_BUILD_DIR" || return "$APPPILOT_ERR_CONFIG"
+    [[ -d "$APP_PATH/$APP_BUILD_DIR" ]] || return "$APPPILOT_ERR_CONFIG"
   fi
 }
 
 app_config_to_json() {
-  printf '{"name":%s,"manager":%s,"path":%s,"entrypoint":%s,"composeFile":%s,"environment":%s}' \
+  printf '{"name":%s,"manager":%s,"path":%s,"entrypoint":%s,"composeFile":%s,"buildDir":%s,"environment":%s}' \
     "$(json_string "$APP_NAME")" "$(json_string "$APP_MANAGER")" "$(json_string "$APP_PATH")" \
-    "$(json_string "$APP_ENTRYPOINT")" "$(json_string "$APP_COMPOSE_FILE")" "$(json_string "$APP_ENVIRONMENT")"
+    "$(json_string "$APP_ENTRYPOINT")" "$(json_string "$APP_COMPOSE_FILE")" "$(json_string "$APP_BUILD_DIR")" "$(json_string "$APP_ENVIRONMENT")"
 }

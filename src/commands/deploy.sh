@@ -199,6 +199,10 @@ cmd_deploy() {
     output_error "Application not found or invalid: $app" "$code"
     return "$code"
   }
+  if [[ "$APP_MANAGER" == "static" ]]; then
+    output_error "deploy does not support static apps yet. Build the frontend, then run apppilot expose." "$APPPILOT_ERR_UNSUPPORTED"
+    return "$APPPILOT_ERR_UNSUPPORTED"
+  fi
 
   deploy_git_validate || {
     local code="$?"

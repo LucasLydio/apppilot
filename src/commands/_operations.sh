@@ -180,11 +180,11 @@ status_print_table() {
   [[ -n "$cpu" ]] || cpu="-"
   [[ -n "$restarts" ]] || restarts="-"
   [[ -n "$services" ]] || services="-"
-  if [[ "$APP_MANAGER" == "compose" ]]; then
-    target="$APP_COMPOSE_FILE"
-  else
-    target="$APP_ENTRYPOINT"
-  fi
+  case "$APP_MANAGER" in
+    compose) target="$APP_COMPOSE_FILE" ;;
+    static) target="$APP_BUILD_DIR" ;;
+    *) target="$APP_ENTRYPOINT" ;;
+  esac
 
   ui_title "AppPilot Status"
   printf '\n'
@@ -224,18 +224,21 @@ status_print_full() {
     ui_kv "Exec mode" "$(status_detail "$details_file" execMode)"
     ui_kv "Entrypoint" "$APP_ENTRYPOINT"
     ui_kv "Script path" "$(status_detail "$details_file" scriptPath)"
-  else
+  elif [[ "$APP_MANAGER" == "compose" ]]; then
     ui_kv "Runtime name" "$(status_detail "$details_file" runtimeName)"
     ui_kv "Services" "$(status_detail "$details_file" services)"
     ui_kv "Compose file" "$APP_COMPOSE_FILE"
     ui_kv "Project" "$(status_detail "$details_file" project)"
+  else
+    ui_kv "Runtime name" "$(status_detail "$details_file" runtimeName)"
+    ui_kv "Build directory" "$APP_BUILD_DIR"
   fi
   ui_kv "Config file" "$(app_config_file_for "$APP_NAME")"
 }
 
 status_details_json() {
   local details_file="$1"
-  printf '{"status":%s,"runtimeName":%s,"pid":%s,"cpu":%s,"memoryBytes":%s,"restarts":%s,"uptimeSeconds":%s,"services":%s,"path":%s,"entrypoint":%s,"composeFile":%s,"environment":%s}' \
+  printf '{"status":%s,"runtimeName":%s,"pid":%s,"cpu":%s,"memoryBytes":%s,"restarts":%s,"uptimeSeconds":%s,"services":%s,"path":%s,"entrypoint":%s,"composeFile":%s,"buildDir":%s,"environment":%s}' \
     "$(json_string "$(status_detail "$details_file" status)")" \
     "$(json_string "$(status_detail "$details_file" runtimeName)")" \
     "$(json_string "$(status_detail "$details_file" pid)")" \
@@ -247,6 +250,7 @@ status_details_json() {
     "$(json_string "$APP_PATH")" \
     "$(json_string "$APP_ENTRYPOINT")" \
     "$(json_string "$APP_COMPOSE_FILE")" \
+    "$(json_string "$APP_BUILD_DIR")" \
     "$(json_string "$APP_ENVIRONMENT")"
 }
 

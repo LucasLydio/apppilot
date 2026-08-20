@@ -45,9 +45,11 @@ v0.2 begins with the first project bootstrap command:
 
 ```bash
 apppilot clone <repo> <name>
+apppilot add-static --name web --path ~/apps/web --build-dir dist
+apppilot expose web --domain example.com
 ```
 
-It clones into `~/apps/<name>` by default, then points the user to `apppilot add` so manager, entrypoint, Compose file, and environment are still reviewed before AppPilot controls the app.
+`clone` puts apps into `~/apps/<name>` by default. `add-static` gives frontend-only builds a clean registry path, and `expose` can serve that build folder through Nginx without pretending the frontend is a PM2 app.
 
 ## Recommended VM Layout
 
@@ -298,6 +300,146 @@ apppilot restart tiny-api
 
 Tip: AppPilot can create the boilerplate file, but you still need to edit real values such as database URLs, tokens, and secrets.
 
+## Production Frontend And Backend Flow
+
+Many real products use separate repositories for frontend and backend. Keep them as separate app folders on the VM:
+
+```text
+~/apps/my-product-api/
+~/apps/my-product-web/
+```
+
+Before exposing anything publicly, install the adapters you need:
+
+```bash
+apppilot adapters list
+apppilot adapters install git
+apppilot adapters install pm2
+apppilot adapters install nginx
+apppilot adapters install certbot
+```
+
+Tip: run every infrastructure command with `--dry-run` first. The dry-run should show exactly what AppPilot plans to do before it writes Nginx files, reloads Nginx, or asks Certbot for certificates.
+
+### Backend API
+
+Register and deploy the backend first:
+
+```bash
+cd ~/apps/my-product-api
+apppilot add
+apppilot env init my-product-api
+nano .env
+apppilot deploy my-product-api --dry-run
+apppilot deploy my-product-api
+apppilot status my-product-api
+apppilot health my-product-api
+```
+
+Make sure the backend listens locally, for example on port `3000`:
+
+```bash
+curl http://localhost:3000
+```
+
+Expose the backend through Nginx:
+
+```bash
+apppilot expose my-product-api \
+  --domain api.example.com \
+  --type proxy \
+  --port 3000 \
+  --dry-run
+```
+
+If the generated Nginx config looks correct:
+
+```bash
+apppilot expose my-product-api \
+  --domain api.example.com \
+  --type proxy \
+  --port 3000 \
+  --yes
+```
+
+Tip: the backend can run with PM2 or Docker Compose. Nginx should usually proxy to a local service such as `127.0.0.1:3000`; avoid exposing backend ports directly to the internet unless you intentionally need that.
+
+### Frontend Web
+
+Build the frontend after setting the production API URL:
+
+```bash
+cd ~/apps/my-product-web
+nano .env
+npm install
+npm run build
+ls dist
+apppilot add-static --name my-product-web --path "$PWD" --build-dir dist
+```
+
+For Vite/React, the build folder is usually `dist`. For Create React App, it is usually `build`.
+
+Expose the built frontend through Nginx:
+
+```bash
+apppilot expose my-product-web \
+  --domain example.com \
+  --dry-run
+```
+
+If the generated Nginx config looks correct:
+
+```bash
+apppilot expose my-product-web \
+  --domain example.com \
+  --yes
+```
+
+Tip: `add-static` registers the frontend path and build folder only. It does not start a process because Nginx serves the built files directly.
+
+### DNS And SSL
+
+Before running Certbot, point DNS to the VM public IP:
+
+```text
+example.com       A    <your-vm-public-ip>
+api.example.com   A    <your-vm-public-ip>
+```
+
+Then confirm ports `80` and `443` are reachable on the VM firewall/cloud firewall.
+
+After DNS is live, issue SSL:
+
+```bash
+apppilot expose my-product-api \
+  --domain api.example.com \
+  --type proxy \
+  --port 3000 \
+  --ssl \
+  --email you@example.com \
+  --yes
+
+apppilot expose my-product-web \
+  --domain example.com \
+  --ssl \
+  --email you@example.com \
+  --yes
+```
+
+Tip: do not run Certbot before DNS points to the server. Certificate validation will fail if the domain still points somewhere else.
+
+### Production Checklist
+
+```bash
+apppilot doctor
+apppilot security audit
+apppilot validate
+apppilot backup snapshot my-product-api --dry-run
+apppilot backup snapshot my-product-api
+apppilot health my-product-api --url https://api.example.com
+curl https://example.com
+```
+
 ## Run The App
 
 Start the app:
@@ -481,8 +623,9 @@ apppilot adapters updates
 apppilot clone <repo> <name> [--path <destination>] [--branch <branch>]
 apppilot add
 apppilot add --name <name> --manager <pm2|compose> --path <path> [--entrypoint <file>|--compose-file <file>] [--env-from-example]
+apppilot add-static --name <name> --path <path> --build-dir dist
 apppilot env init <app>
-apppilot expose <app> --domain <domain> --type static --build-dir dist [--ssl]
+apppilot expose <static-app> --domain <domain> [--ssl]
 apppilot expose <app> --domain <domain> --type proxy --port 3000 [--ssl]
 apppilot list
 apppilot remove <app> --yes

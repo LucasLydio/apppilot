@@ -57,4 +57,8 @@ jobs:
           json_smoke "apppilot expose smoke-api --dry-run --json" bash bin/apppilot expose smoke-api --domain smoke.example.com --type proxy --port 3000 --dry-run --json
           json_smoke "apppilot health smoke-api --dry-run --json" bash bin/apppilot health smoke-api --dry-run --json
           json_smoke "apppilot backup snapshot smoke-api --dry-run --json" bash bin/apppilot backup snapshot smoke-api --dry-run --json
+          mkdir -p "$tmp/web/dist"
+          printf 'ok\n' > "$tmp/web/dist/index.html"
+          bash bin/apppilot add-static --name smoke-web --path "$tmp/web" --build-dir dist --non-interactive
+          json_smoke "apppilot expose smoke-web --dry-run --json" bash bin/apppilot expose smoke-web --domain smoke-web.example.com --dry-run --json
           rm -f tests/fixtures/pm2-app/.env.example

@@ -27,7 +27,7 @@ expose_json_actions() {
 }
 
 expose_default_type() {
-  if [[ -d "$APP_PATH/dist" || -d "$APP_PATH/build" ]]; then
+  if [[ "$APP_MANAGER" == "static" || -d "$APP_PATH/dist" || -d "$APP_PATH/build" ]]; then
     printf 'static'
   else
     printf 'proxy'
@@ -36,6 +36,10 @@ expose_default_type() {
 
 expose_default_build_dir() {
   local candidate
+  if [[ -n "$APP_BUILD_DIR" ]]; then
+    printf '%s' "$APP_BUILD_DIR"
+    return 0
+  fi
   for candidate in dist build public; do
     if [[ -d "$APP_PATH/$candidate" ]]; then
       printf '%s' "$candidate"

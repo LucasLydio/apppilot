@@ -122,6 +122,15 @@ apppilot env init tiny-api
 nano .env
 ```
 
+For a static frontend app:
+
+```bash
+cd ~/apps/my-web
+npm run build
+apppilot add-static --name my-web --path "$PWD" --build-dir dist
+apppilot expose my-web --domain example.com --dry-run
+```
+
 ## 6. Start And Inspect
 
 ```bash

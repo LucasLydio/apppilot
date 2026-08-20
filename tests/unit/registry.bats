@@ -232,19 +232,38 @@ teardown() {
   project="$APPPILOT_TEST_HOME/web-app"
   mkdir -p "$project/dist"
   printf 'ok\n' >"$project/dist/index.html"
-  printf 'console.log("ok")\n' >"$project/server.js"
 
   run bash "$APPPILOT_BIN" init --non-interactive --quiet
   [ "$status" -eq 0 ]
-  run bash "$APPPILOT_BIN" add --name web --manager pm2 --path "$project" --entrypoint server.js --non-interactive
+  run bash "$APPPILOT_BIN" add-static --name web --path "$project" --build-dir dist --non-interactive
   [ "$status" -eq 0 ]
-  run bash "$APPPILOT_BIN" expose web --domain example.com --type static --build-dir dist --dry-run
+  [[ "$output" == *"Registered web (static)"* ]]
+  run bash "$APPPILOT_BIN" expose web --domain example.com --dry-run
   [ "$status" -eq 0 ]
   [[ "$output" == *"Would expose: web"* ]]
+  [[ "$output" == *"Type: static"* ]]
   [[ "$output" == *"server_name example.com"* ]]
   [[ "$output" == *"root $project/dist"* ]]
   [[ "$output" == *"try_files"* ]]
   [ ! -e "/etc/nginx/sites-available/apppilot-web-example.com.conf" ]
+}
+
+@test "add-static supports json output and list shows static manager" {
+  project="$APPPILOT_TEST_HOME/web-app"
+  mkdir -p "$project/build"
+  printf 'ok\n' >"$project/build/index.html"
+
+  run bash "$APPPILOT_BIN" init --non-interactive --quiet
+  [ "$status" -eq 0 ]
+  run bash "$APPPILOT_BIN" add-static --name web --path "$project" --build-dir build --json --non-interactive
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'"manager":"static"'* ]]
+  [[ "$output" == *'"buildDir":"build"'* ]]
+
+  run bash "$APPPILOT_BIN" list --json
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'"manager":"static"'* ]]
+  [[ "$output" == *'"buildDir":"build"'* ]]
 }
 
 @test "expose dry-run renders proxy nginx config json" {

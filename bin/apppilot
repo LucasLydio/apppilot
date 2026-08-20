@@ -84,6 +84,8 @@ export APPPILOT_ROOT APPPILOT_JSON APPPILOT_QUIET APPPILOT_NON_INTERACTIVE APPPI
 . "$APPPILOT_ROOT/src/commands/v0.2/deploy-history.sh"
 # shellcheck source=src/commands/v0.2/clone.sh
 . "$APPPILOT_ROOT/src/commands/v0.2/clone.sh"
+# shellcheck source=src/commands/v0.2/add-static.sh
+. "$APPPILOT_ROOT/src/commands/v0.2/add-static.sh"
 # shellcheck source=src/commands/v0.2/health.sh
 . "$APPPILOT_ROOT/src/commands/v0.2/health.sh"
 # shellcheck source=src/commands/v0.2/backup.sh
@@ -113,6 +115,7 @@ usage() {
   printf '  %-34s %s\n' 'security audit' 'Run read-only security checks'
   ui_section "Applications"
   printf '  %-34s %s\n' 'add [--name <app> ...]' 'Register PM2 or Compose app'
+  printf '  %-34s %s\n' 'add-static [--name <app> ...]' 'Register static frontend app'
   printf '  %-34s %s\n' 'add --env-from-example' 'Copy .env.example to .env'
   printf '  %-34s %s\n' 'env init <app>' 'Create .env from .env.example'
   printf '  %-34s %s\n' 'clone <repo> <name>' 'Clone an app into ~/apps'
@@ -168,6 +171,7 @@ main() {
     --version) printf '%s\n' "$APPPILOT_VERSION" ;;
     init) cmd_init "${args[@]}" ;;
     add) cmd_add "${args[@]}" ;;
+    add-static) cmd_add_static "${args[@]}" ;;
     clone) cmd_clone "${args[@]}" ;;
     expose) cmd_expose "${args[@]}" ;;
     env) cmd_env "${args[@]}" ;;

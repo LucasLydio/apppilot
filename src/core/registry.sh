@@ -22,9 +22,10 @@ registry_add() {
   local entrypoint="${4:-}"
   local compose_file="${5:-}"
   local environment="${6:-production}"
+  local build_dir="${7:-}"
   local file
 
-  registry_validate_new "$name" "$manager" "$path" "$entrypoint" "$compose_file" || return "$?"
+  registry_validate_new "$name" "$manager" "$path" "$entrypoint" "$compose_file" "$build_dir" || return "$?"
   file="$(app_config_file_for "$name")"
   registry_ensure
   local tmp_file
@@ -35,8 +36,10 @@ registry_add() {
     printf 'path: %s\n' "$path"
     if [[ "$manager" == "pm2" ]]; then
       printf 'entrypoint: %s\n' "$entrypoint"
-    else
+    elif [[ "$manager" == "compose" ]]; then
       printf 'compose_file: %s\n' "$compose_file"
+    else
+      printf 'build_dir: %s\n' "$build_dir"
     fi
     printf 'environment: %s\n' "$environment"
   } >"$tmp_file"
@@ -50,22 +53,30 @@ registry_validate_new() {
   local path="$3"
   local entrypoint="${4:-}"
   local compose_file="${5:-}"
+  local build_dir="${6:-}"
   local file
 
   validator_name "$name" || return "$APPPILOT_ERR_ARGS"
-  validator_manager "$manager" || return "$APPPILOT_ERR_ARGS"
+  validator_registry_manager "$manager" || return "$APPPILOT_ERR_ARGS"
   validator_path_safe "$path" || return "$APPPILOT_ERR_ARGS"
   [[ -d "$path" ]] || return "$APPPILOT_ERR_CONFIG"
   file="$(app_config_file_for "$name")"
   [[ ! -e "$file" ]] || return "$APPPILOT_ERR_CONFIG"
 
-  if [[ "$manager" == "pm2" ]]; then
-    validator_relative_path_safe "$entrypoint" || return "$APPPILOT_ERR_CONFIG"
-    [[ -f "$path/$entrypoint" && ! -L "$path/$entrypoint" ]] || return "$APPPILOT_ERR_CONFIG"
-  else
-    validator_relative_path_safe "$compose_file" || return "$APPPILOT_ERR_CONFIG"
-    [[ -f "$path/$compose_file" && ! -L "$path/$compose_file" ]] || return "$APPPILOT_ERR_CONFIG"
-  fi
+  case "$manager" in
+    pm2)
+      validator_relative_path_safe "$entrypoint" || return "$APPPILOT_ERR_CONFIG"
+      [[ -f "$path/$entrypoint" && ! -L "$path/$entrypoint" ]] || return "$APPPILOT_ERR_CONFIG"
+      ;;
+    compose)
+      validator_relative_path_safe "$compose_file" || return "$APPPILOT_ERR_CONFIG"
+      [[ -f "$path/$compose_file" && ! -L "$path/$compose_file" ]] || return "$APPPILOT_ERR_CONFIG"
+      ;;
+    static)
+      validator_relative_path_safe "$build_dir" || return "$APPPILOT_ERR_CONFIG"
+      [[ -d "$path/$build_dir" && ! -L "$path/$build_dir" ]] || return "$APPPILOT_ERR_CONFIG"
+      ;;
+  esac
 }
 
 registry_remove() {

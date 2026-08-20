@@ -101,6 +101,14 @@ apppilot add \
   --non-interactive
 ```
 
+Static frontend:
+
+```bash
+cd /home/lucaslydio/apps/web
+npm run build
+apppilot add-static --name web --path "$PWD" --build-dir dist
+```
+
 List and remove:
 
 ```bash
@@ -108,7 +116,7 @@ apppilot list
 apppilot remove tiny-api --yes --non-interactive
 ```
 
-Tip: the project path must already exist. AppPilot registers and controls apps; v0.1 does not clone or build them.
+Tip: the project path must already exist. `add` is for PM2 and Compose apps. `add-static` is for frontend build folders served by Nginx.
 
 ## Environment Files
 
@@ -127,8 +135,8 @@ apppilot env init tiny-api --json
 Static frontend:
 
 ```bash
-apppilot expose web --domain example.com --type static --build-dir dist --dry-run
-apppilot expose web --domain example.com --type static --build-dir dist --yes
+apppilot expose web --domain example.com --dry-run
+apppilot expose web --domain example.com --yes
 ```
 
 Backend service:
@@ -141,8 +149,8 @@ apppilot expose api --domain api.example.com --type proxy --port 3000 --yes
 With Certbot:
 
 ```bash
-apppilot expose web --domain example.com --type static --build-dir dist --ssl --email ops@example.com --dry-run
-apppilot expose web --domain example.com --type static --build-dir dist --ssl --email ops@example.com --yes
+apppilot expose web --domain example.com --ssl --email ops@example.com --dry-run
+apppilot expose web --domain example.com --ssl --email ops@example.com --yes
 ```
 
 `expose` writes an Nginx site config, enables it, tests Nginx, and reloads Nginx. It does not edit DNS. `--ssl` runs Certbot after Nginx is configured.

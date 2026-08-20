@@ -38,6 +38,7 @@ bats tests/unit/cli.bats tests/unit/registry.bats
 - [ ] `apppilot clone <repo> <name> --dry-run` shows the destination and next step
 - [ ] Guided `apppilot add` shows tips and defaults
 - [ ] Guided `apppilot add` can redo answers with `r`
+- [ ] `apppilot add-static --name <app> --path <path> --build-dir dist` registers a frontend build folder
 - [ ] `.env.example` prompt can create `.env`
 - [ ] `apppilot env init <app>` works for an already-registered app
 - [ ] `apppilot env init <app>` refuses to overwrite `.env`
@@ -48,7 +49,7 @@ bats tests/unit/cli.bats tests/unit/registry.bats
 - [ ] `apppilot deploy history <app>` shows the latest deploy records
 - [ ] `apppilot deploy rollback <app> --dry-run` shows the target revision
 - [ ] `apppilot deploy rollback <app>` resets Git and restarts the app
-- [ ] `apppilot expose <app> --domain <domain> --type static --build-dir dist --dry-run` shows Nginx config
+- [ ] `apppilot expose <static-app> --domain <domain> --dry-run` shows Nginx static config
 - [ ] `apppilot expose <app> --domain <domain> --type proxy --port 3000 --dry-run` shows Nginx proxy config
 - [ ] `apppilot health <app>` checks runtime status
 - [ ] `apppilot health <app> --url <url>` checks HTTP response

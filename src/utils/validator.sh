@@ -10,6 +10,11 @@ validator_manager() {
   [[ "$manager" == "pm2" || "$manager" == "compose" ]]
 }
 
+validator_registry_manager() {
+  local manager="${1:-}"
+  [[ "$manager" == "pm2" || "$manager" == "compose" || "$manager" == "static" ]]
+}
+
 validator_path_safe() {
   local path="${1:-}"
   [[ "$path" == /* ]] || return 1

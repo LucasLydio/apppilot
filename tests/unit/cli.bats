@@ -16,6 +16,7 @@ load ../test_helper
   [[ "$output" == *"validate"* ]]
   [[ "$output" == *"overview"* ]]
   [[ "$output" == *"clone <repo> <name>"* ]]
+  [[ "$output" == *"add-static"* ]]
   [[ "$output" == *"expose <app>"* ]]
   [[ "$output" == *"health <app>"* ]]
   [[ "$output" == *"backup snapshot <app>"* ]]

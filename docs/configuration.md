@@ -86,6 +86,16 @@ compose_file: compose.yaml
 environment: production
 ```
 
+Static frontend example:
+
+```yaml
+name: web
+manager: static
+path: /home/lucaslydio/apps/web
+build_dir: dist
+environment: production
+```
+
 Tip: registry files must not contain secret values. Put app secrets in the app's `.env` file or another secret store.
 
 ## Environment Files

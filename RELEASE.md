@@ -39,9 +39,10 @@ apppilot deploy users-api --dry-run
 Infrastructure commands started in v0.2:
 
 ```bash
-apppilot expose <app> --domain example.com --type static --build-dir dist
+apppilot add-static --name web --path ~/apps/web --build-dir dist
+apppilot expose web --domain example.com
 apppilot expose <app> --domain api.example.com --type proxy --port 3000
-apppilot expose <app> --domain example.com --type static --build-dir dist --ssl --email ops@example.com
+apppilot expose web --domain example.com --ssl --email ops@example.com
 apppilot health <app>
 apppilot health <app> --url http://localhost:3000
 apppilot backup snapshot <app>

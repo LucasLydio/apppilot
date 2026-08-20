@@ -39,6 +39,15 @@ apppilot env init ecommerce
 apppilot start ecommerce
 ```
 
+Typical static frontend flow:
+
+```text
+git clone frontend into ~/apps/web
+npm run build
+apppilot add-static --name web --path ~/apps/web --build-dir dist
+apppilot expose web --domain example.com
+```
+
 ## Code Responsibilities
 
 - `bin/apppilot` parses global flags and routes commands.
